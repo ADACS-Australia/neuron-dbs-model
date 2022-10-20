@@ -153,7 +153,7 @@ if __name__ == '__main__':
 	STN_space = space.RandomStructure(boundary=space.Sphere(2000))				# Sphere with radius 2000um
 
 	# Generate poisson distributed spike time striatal input
-	striatal_spike_times =  np.load('Striatal_Spike_Times.npy')					# Load spike times from file
+	striatal_spike_times =  np.load('Striatal_Spike_Times.npy', allow_pickle=True)					# Load spike times from file
 
 	# Generate the cortico-basal ganglia neuron populations
 	Cortical_Pop = Population(Pop_size, Cortical_Neuron_Type(soma_bias_current_amp=0.245), structure=STN_space, label='Cortical Neurons') # Better than above (ibias=0.2575)

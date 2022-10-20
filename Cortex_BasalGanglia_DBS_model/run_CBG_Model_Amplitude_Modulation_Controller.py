@@ -158,7 +158,7 @@ if __name__ == '__main__':
 
 	# Save/load Striatal Spike times
 	#np.save('Striatal_Spike_Times.npy', striatal_spike_times)		# Save spike times so they can be reloaded
-	striatal_spike_times =  np.load('Striatal_Spike_Times.npy')		# Load spike times from file
+	striatal_spike_times =  np.load('Striatal_Spike_Times.npy', allow_pickle=True)		# Load spike times from file
 	for i in range(0,Pop_size):
 		spike_times = striatal_spike_times[i][0].value
 		spike_times = spike_times[spike_times>steady_state_duration]
