@@ -4,6 +4,7 @@ Steps:
 1) Install dependencies
 ```
 $ pip install -r requirements.txt
+$ pip install nrnutils>=0.2.0 # requires NEURON to be installed first
 ```
 
 2) Compile the NEURON model mod files using `nrnivmodl`
