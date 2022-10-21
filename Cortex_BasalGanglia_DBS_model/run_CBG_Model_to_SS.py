@@ -644,7 +644,6 @@ if __name__ == "__main__":
     )
     STN_LFP_GABAa = STN_LFP_GABAa_1 - STN_LFP_GABAa_2
 
-    """
     # Simulation Label for writing model output data - uncomment to write the specified variables to file
     simulation_label = "Steady_State_Simulation"
 
@@ -683,7 +682,6 @@ if __name__ == "__main__":
     STN_LFP_GABAa_seg.analogsignals.append(STN_LFP_GABAa_signal)
     w = neo.io.NeoMatlabIO(filename="/Simulation_Output_Results/"+simulation_label+"/STN_LFP_GABAa.mat")
     w.write_block(STN_LFP_GABAa_Block)
-    """
 
     print("Steady State Simulation Done!")
 
