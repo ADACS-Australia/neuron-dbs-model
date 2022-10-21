@@ -3,7 +3,7 @@ Steps:
 
 1) Install dependencies
 ```
-$ pip install numpy scipy neuron pyNN mpi4py nrnutils
+$ pip install -r requirements.txt
 ```
 
 2) Compile the NEURON model mod files using `nrnivmodl`
