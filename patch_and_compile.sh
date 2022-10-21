@@ -14,8 +14,9 @@ echo "Changing directory to $PYNN"
 cd $PYNN
 
 # Apply patches
-diff -ru . $OLDPWD/$MODEL/Updated_PyNN_Files/ | patch -p0
+diff -ru . $OLDPWD/$MODEL/Updated_PyNN_Files/ | patch -p0 || echo "WARNING: Assuming pyNN is already patched."
 
 # Compile
 cd neuron/nmodl
+echo "Changing directory to $(pwd)"
 nrnivmodl
