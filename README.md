@@ -28,3 +28,18 @@ patching file ./neuron/standardmodels/electrodes.py
 $ cd Cortex_BasalGanglia_DBS_model/
 $ python run_CBG_Model_to_SS.py neuron
 ```
+
+# Running on OzSTAR
+Steps:
+
+1) Load OzSTAR modules
+```
+$ . ozstar_modules.sh
+```
+
+2) Create Python venv
+```
+$ python -m venv neuron
+```
+
+3) Follow installation instructions above
