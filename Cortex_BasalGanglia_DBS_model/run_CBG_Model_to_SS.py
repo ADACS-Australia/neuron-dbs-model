@@ -178,6 +178,7 @@ def calculate_avg_beta_power(lfp_signal, tail_length, beta_b, beta_a):
 
 if __name__ == "__main__":
 
+    print("Setting up simulation...")
     # Setup simulation
     setup(timestep=0.01, rngseed=3695)
     steady_state_duration = 6000.0  # Duration of simulation steady state
@@ -581,6 +582,7 @@ if __name__ == "__main__":
         )
 
     # Run the model to the steady state
+    print("Running model...")
     run_to_steady_state(steady_state_duration)
 
     # Calculate the LFP and biomarkers, etc.
