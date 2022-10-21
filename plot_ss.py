@@ -1,9 +1,10 @@
-from scipy.io import loadmat
 from matplotlib import pyplot as plt
+from neo.io import NeoMatlabIO
 
-data = loadmat('Cortex_BasalGanglia_DBS_model/Simulation_Output_Results/Steady_State_Simulation/STN_LFP.mat',simplify_cells=True)
+filename = 'Cortex_BasalGanglia_DBS_model/Simulation_Output_Results/Steady_State_Simulation/STN_LFP.mat'
 
-signal = data['block']['segments']['analogsignals']['signal']
+block = NeoMatlabIO(filename).read_block()
+signal = block.segments[0].analogsignals[0]
 
 plt.plot(signal)
 
