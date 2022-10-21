@@ -3,11 +3,11 @@
 Created on Wed April 03 14:27:26 2019
 
 Description: Cortico-Basal Ganglia Network Model implemented in PyNN using the simulator Neuron.
-			This version of the model runs an initial run of the model integrating the model to
-			the steady state. The steady state can then be loaded in subsequent simulations to
-			test DBS controllers. Full documentation of the model and controllers used is given in:
+            This version of the model runs an initial run of the model integrating the model to
+            the steady state. The steady state can then be loaded in subsequent simulations to
+            test DBS controllers. Full documentation of the model and controllers used is given in:
 
-			https://www.frontiersin.org/articles/10.3389/fnins.2020.00166/
+            https://www.frontiersin.org/articles/10.3389/fnins.2020.00166/
 
 @author: John Fleming, john.fleming@ucdconnect.ie
 """
@@ -321,23 +321,23 @@ if __name__ == "__main__":
         STN_cell.position[2] = 500
 
     """
-	# Position Check -
-	# 1) Make sure cells are bounded in 4mm space in x, y coordinates
-	# 2) Make sure no cells are placed inside the stimulating/recording electrode -0.5mm<x<0.5mm, -1.5mm<y<2mm
-	for Cortical_cell in Cortical_Pop:
-		#while(((np.abs(Cortical_cell.position[0])>2000) or ((np.abs(Cortical_cell.position[1])>2000))) or ((np.abs(Cortical_cell.position[0])<500) and (Cortical_cell.position[1]>-1500 and Cortical_cell.position[1]<2000))):
-		while(((np.abs(Cortical_cell.position[0])>3000) or ((np.abs(Cortical_cell.position[1])>3000))) or ((np.abs(Cortical_cell.position[0])<700) and Cortical_cell.position[1]>-1500)):
-			Cortical_cell.position = STN_space.generate_positions(1).flatten()
+    # Position Check -
+    # 1) Make sure cells are bounded in 4mm space in x, y coordinates
+    # 2) Make sure no cells are placed inside the stimulating/recording electrode -0.5mm<x<0.5mm, -1.5mm<y<2mm
+    for Cortical_cell in Cortical_Pop:
+        #while(((np.abs(Cortical_cell.position[0])>2000) or ((np.abs(Cortical_cell.position[1])>2000))) or ((np.abs(Cortical_cell.position[0])<500) and (Cortical_cell.position[1]>-1500 and Cortical_cell.position[1]<2000))):
+        while(((np.abs(Cortical_cell.position[0])>3000) or ((np.abs(Cortical_cell.position[1])>3000))) or ((np.abs(Cortical_cell.position[0])<700) and Cortical_cell.position[1]>-1500)):
+            Cortical_cell.position = STN_space.generate_positions(1).flatten()
 
-	#np.savetxt('cortical_xy_pos.txt', Cortical_Pop.positions, delimiter=',')	# Save the generated cortical xy positions to a textfile
+    #np.savetxt('cortical_xy_pos.txt', Cortical_Pop.positions, delimiter=',')	# Save the generated cortical xy positions to a textfile
 
-	for STN_cell in STN_Pop:
-		#while(((np.abs(STN_cell.position[0])>2000) or ((np.abs(STN_cell.position[1])>2000))) or ((np.abs(STN_cell.position[0])<500) and (STN_cell.position[1]>-1500 and STN_cell.position[1]<2000))):
-		while(((np.abs(STN_cell.position[0])>2000) or ((np.abs(STN_cell.position[1])>2000))) or ((np.abs(STN_cell.position[0])<635) and STN_cell.position[1]>-1500)):
-			STN_cell.position = STN_space.generate_positions(1).flatten()
+    for STN_cell in STN_Pop:
+        #while(((np.abs(STN_cell.position[0])>2000) or ((np.abs(STN_cell.position[1])>2000))) or ((np.abs(STN_cell.position[0])<500) and (STN_cell.position[1]>-1500 and STN_cell.position[1]<2000))):
+        while(((np.abs(STN_cell.position[0])>2000) or ((np.abs(STN_cell.position[1])>2000))) or ((np.abs(STN_cell.position[0])<635) and STN_cell.position[1]>-1500)):
+            STN_cell.position = STN_space.generate_positions(1).flatten()
 
-	#np.savetxt('STN_xy_pos.txt', STN_Pop.positions, delimiter=',')	# Save the generated STN xy positions to a textfile
-	"""
+    #np.savetxt('STN_xy_pos.txt', STN_Pop.positions, delimiter=',')	# Save the generated STN xy positions to a textfile
+    """
 
     # Assign Positions for recording and stimulating electrode point sources
     recording_electrode_1_position = np.array([0, -1500, 250])
@@ -387,20 +387,20 @@ if __name__ == "__main__":
     syn_CorticalThalamic = StaticSynapse(weight=0.0, delay=2)
 
     """
-	# Create new Synaptic Projections
-	prj_CorticalAxon_Interneuron = Projection(Cortical_Pop, Interneuron_Pop,  FixedNumberPreConnector(n=10, allow_self_connections=False), syn_CorticalAxon_Interneuron, source='middle_axon_node', receptor_type='AMPA')
-	prj_Interneuron_CorticalSoma = Projection(Interneuron_Pop, Cortical_Pop,  FixedNumberPreConnector(n=10, allow_self_connections=False), syn_Interneuron_CorticalSoma, receptor_type='GABAa')
-	prj_CorticalSTN = Projection(Cortical_Pop, STN_Pop, FixedNumberPreConnector(n=5, allow_self_connections=False), syn_CorticalCollateralSTN, source='collateral(0.5)', receptor_type='AMPA')
-	prj_STNGPe = Projection(STN_Pop, GPe_Pop, FixedNumberPreConnector(n=1, allow_self_connections=False), syn_STNGPe, source='soma(0.5)', receptor_type='AMPA')
-	prj_GPeGPe = Projection(GPe_Pop, GPe_Pop, FixedNumberPreConnector(n=1, allow_self_connections=False), syn_GPeGPe, source='soma(0.5)', receptor_type='GABAa')
-	prj_GPeSTN = Projection(GPe_Pop, STN_Pop, FixedNumberPreConnector(n=2, allow_self_connections=False), syn_GPeSTN, source='soma(0.5)', receptor_type='GABAa')
-	prj_StriatalGPe = Projection(Striatal_Pop, GPe_Pop, FixedNumberPreConnector(n=1, allow_self_connections=False), syn_StriatalGPe, source='soma(0.5)', receptor_type='GABAa')
-	prj_STNGPi = Projection(STN_Pop, GPi_Pop, FixedNumberPreConnector(n=1,allow_self_connections=False), syn_STNGPi, source='soma(0.5)', receptor_type='AMPA')
-	prj_GPeGPi = Projection(GPe_Pop, GPi_Pop, FixedNumberPreConnector(n=1,allow_self_connections=False), syn_GPeGPi, source='soma(0.5)', receptor_type='GABAa')
-	prj_GPiThalamic = Projection(GPi_Pop, Thalamic_Pop, FixedNumberPreConnector(n=1,allow_self_connections=False), syn_GPiThalamic, source='soma(0.5)', receptor_type='GABAa')
-	prj_ThalamicCortical = Projection(Thalamic_Pop, Cortical_Pop, FixedNumberPreConnector(n=1,allow_self_connections=False), syn_ThalamicCortical, source='soma(0.5)', receptor_type='AMPA')
-	prj_CorticalThalamic = Projection(Cortical_Pop, Thalamic_Pop, FixedNumberPreConnector(n=1,allow_self_connections=False), syn_CorticalThalamic, source='soma(0.5)', receptor_type='AMPA')
-	"""
+    # Create new Synaptic Projections
+    prj_CorticalAxon_Interneuron = Projection(Cortical_Pop, Interneuron_Pop,  FixedNumberPreConnector(n=10, allow_self_connections=False), syn_CorticalAxon_Interneuron, source='middle_axon_node', receptor_type='AMPA')
+    prj_Interneuron_CorticalSoma = Projection(Interneuron_Pop, Cortical_Pop,  FixedNumberPreConnector(n=10, allow_self_connections=False), syn_Interneuron_CorticalSoma, receptor_type='GABAa')
+    prj_CorticalSTN = Projection(Cortical_Pop, STN_Pop, FixedNumberPreConnector(n=5, allow_self_connections=False), syn_CorticalCollateralSTN, source='collateral(0.5)', receptor_type='AMPA')
+    prj_STNGPe = Projection(STN_Pop, GPe_Pop, FixedNumberPreConnector(n=1, allow_self_connections=False), syn_STNGPe, source='soma(0.5)', receptor_type='AMPA')
+    prj_GPeGPe = Projection(GPe_Pop, GPe_Pop, FixedNumberPreConnector(n=1, allow_self_connections=False), syn_GPeGPe, source='soma(0.5)', receptor_type='GABAa')
+    prj_GPeSTN = Projection(GPe_Pop, STN_Pop, FixedNumberPreConnector(n=2, allow_self_connections=False), syn_GPeSTN, source='soma(0.5)', receptor_type='GABAa')
+    prj_StriatalGPe = Projection(Striatal_Pop, GPe_Pop, FixedNumberPreConnector(n=1, allow_self_connections=False), syn_StriatalGPe, source='soma(0.5)', receptor_type='GABAa')
+    prj_STNGPi = Projection(STN_Pop, GPi_Pop, FixedNumberPreConnector(n=1,allow_self_connections=False), syn_STNGPi, source='soma(0.5)', receptor_type='AMPA')
+    prj_GPeGPi = Projection(GPe_Pop, GPi_Pop, FixedNumberPreConnector(n=1,allow_self_connections=False), syn_GPeGPi, source='soma(0.5)', receptor_type='GABAa')
+    prj_GPiThalamic = Projection(GPi_Pop, Thalamic_Pop, FixedNumberPreConnector(n=1,allow_self_connections=False), syn_GPiThalamic, source='soma(0.5)', receptor_type='GABAa')
+    prj_ThalamicCortical = Projection(Thalamic_Pop, Cortical_Pop, FixedNumberPreConnector(n=1,allow_self_connections=False), syn_ThalamicCortical, source='soma(0.5)', receptor_type='AMPA')
+    prj_CorticalThalamic = Projection(Cortical_Pop, Thalamic_Pop, FixedNumberPreConnector(n=1,allow_self_connections=False), syn_CorticalThalamic, source='soma(0.5)', receptor_type='AMPA')
+    """
 
     # Load network topology from file
     prj_CorticalAxon_Interneuron = Projection(
@@ -500,21 +500,21 @@ if __name__ == "__main__":
     )
 
     """
-	# Save the network topology so it can be reloaded
-	#prj_CorticalSpikeSourceCorticalSoma.saveConnections(file="CorticalSpikeSourceCorticalSoma_Connections.txt")
-	prj_CorticalAxon_Interneuron.saveConnections(file="CorticalAxonInterneuron_Connections.txt")
-	prj_Interneuron_CorticalSoma.saveConnections(file="InterneuronCortical_Connections.txt")
-	prj_CorticalSTN.saveConnections(file="CorticalSTN_Connections.txt")
-	prj_STNGPe.saveConnections(file="STNGPe_Connections.txt")
-	prj_GPeGPe.saveConnections(file="GPeGPe_Connections.txt")
-	prj_GPeSTN.saveConnections(file="GPeSTN_Connections.txt")
-	prj_StriatalGPe.saveConnections(file="StriatalGPe_Connections.txt")
-	prj_STNGPi.saveConnections(file="STNGPi_Connections.txt")
-	prj_GPeGPi.saveConnections(file="GPeGPi_Connections.txt")
-	prj_GPiThalamic.saveConnections(file="GPiThalamic_Connections.txt")
-	prj_ThalamicCortical.saveConnections(file="ThalamicCorticalSoma_Connections.txt")
-	prj_CorticalThalamic.saveConnections(file="CorticalSomaThalamic_Connections.txt")
-	"""
+    # Save the network topology so it can be reloaded
+    #prj_CorticalSpikeSourceCorticalSoma.saveConnections(file="CorticalSpikeSourceCorticalSoma_Connections.txt")
+    prj_CorticalAxon_Interneuron.saveConnections(file="CorticalAxonInterneuron_Connections.txt")
+    prj_Interneuron_CorticalSoma.saveConnections(file="InterneuronCortical_Connections.txt")
+    prj_CorticalSTN.saveConnections(file="CorticalSTN_Connections.txt")
+    prj_STNGPe.saveConnections(file="STNGPe_Connections.txt")
+    prj_GPeGPe.saveConnections(file="GPeGPe_Connections.txt")
+    prj_GPeSTN.saveConnections(file="GPeSTN_Connections.txt")
+    prj_StriatalGPe.saveConnections(file="StriatalGPe_Connections.txt")
+    prj_STNGPi.saveConnections(file="STNGPi_Connections.txt")
+    prj_GPeGPi.saveConnections(file="GPeGPi_Connections.txt")
+    prj_GPiThalamic.saveConnections(file="GPiThalamic_Connections.txt")
+    prj_ThalamicCortical.saveConnections(file="ThalamicCorticalSoma_Connections.txt")
+    prj_CorticalThalamic.saveConnections(file="CorticalSomaThalamic_Connections.txt")
+    """
 
     # Define state variables to record from each population
     Cortical_Pop.record("soma(0.5).v", sampling_interval=rec_sampling_interval)
@@ -645,45 +645,45 @@ if __name__ == "__main__":
     STN_LFP_GABAa = STN_LFP_GABAa_1 - STN_LFP_GABAa_2
 
     """
-	# Simulation Label for writing model output data - uncomment to write the specified variables to file
-	simulation_label = "Steady_State_Simulation"
+    # Simulation Label for writing model output data - uncomment to write the specified variables to file
+    simulation_label = "Steady_State_Simulation"
 
-	# Write population membrane voltage data to file
-	Cortical_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/Cortical_Pop/Cortical_Collateral_v.mat", 'collateral(0.5).v', clear=False)
-	Cortical_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/Cortical_Pop/Cortical_Soma_v.mat", 'soma(0.5).v', clear=True)
-	Interneuron_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/Interneuron_Pop/Interneuron_Soma_v.mat", 'soma(0.5).v', clear=True)
-	STN_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/STN_Pop/STN_Soma_v.mat", 'soma(0.5).v', clear=True)
-	GPe_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/GPe_Pop/GPe_Soma_v.mat", 'soma(0.5).v', clear=True)
-	GPi_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/GPi_Pop/GPi_Soma_v.mat", 'soma(0.5).v', clear=True)
-	Thalamic_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/Thalamic_Pop/Thalamic_Soma_v.mat", 'soma(0.5).v', clear=True)
+    # Write population membrane voltage data to file
+    Cortical_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/Cortical_Pop/Cortical_Collateral_v.mat", 'collateral(0.5).v', clear=False)
+    Cortical_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/Cortical_Pop/Cortical_Soma_v.mat", 'soma(0.5).v', clear=True)
+    Interneuron_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/Interneuron_Pop/Interneuron_Soma_v.mat", 'soma(0.5).v', clear=True)
+    STN_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/STN_Pop/STN_Soma_v.mat", 'soma(0.5).v', clear=True)
+    GPe_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/GPe_Pop/GPe_Soma_v.mat", 'soma(0.5).v', clear=True)
+    GPi_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/GPi_Pop/GPi_Soma_v.mat", 'soma(0.5).v', clear=True)
+    Thalamic_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/Thalamic_Pop/Thalamic_Soma_v.mat", 'soma(0.5).v', clear=True)
 
-	# Write the STN LFP to .mat file
-	STN_LFP_Block = neo.Block(name='STN_LFP')
-	STN_LFP_seg = neo.Segment(name='segment_0')
-	STN_LFP_Block.segments.append(STN_LFP_seg)
-	STN_LFP_signal = neo.AnalogSignal(STN_LFP, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
-	STN_LFP_seg.analogsignals.append(STN_LFP_signal)
+    # Write the STN LFP to .mat file
+    STN_LFP_Block = neo.Block(name='STN_LFP')
+    STN_LFP_seg = neo.Segment(name='segment_0')
+    STN_LFP_Block.segments.append(STN_LFP_seg)
+    STN_LFP_signal = neo.AnalogSignal(STN_LFP, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
+    STN_LFP_seg.analogsignals.append(STN_LFP_signal)
 
-	w = neo.io.NeoMatlabIO(filename="/Simulation_Output_Results/"+simulation_label+"/STN_LFP.mat")
-	w.write_block(STN_LFP_Block)
+    w = neo.io.NeoMatlabIO(filename="/Simulation_Output_Results/"+simulation_label+"/STN_LFP.mat")
+    w.write_block(STN_LFP_Block)
 
-	# Write LFP AMPA and GABAa conmponents to file
-	STN_LFP_AMPA_Block = neo.Block(name='STN_LFP_AMPA')
-	STN_LFP_AMPA_seg = neo.Segment(name='segment_0')
-	STN_LFP_AMPA_Block.segments.append(STN_LFP_AMPA_seg)
-	STN_LFP_AMPA_signal = neo.AnalogSignal(STN_LFP_AMPA, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
-	STN_LFP_AMPA_seg.analogsignals.append(STN_LFP_AMPA_signal)
-	w = neo.io.NeoMatlabIO(filename="/Simulation_Output_Results/"+simulation_label+"/STN_LFP_AMPA.mat")
-	w.write_block(STN_LFP_AMPA_Block)
+    # Write LFP AMPA and GABAa conmponents to file
+    STN_LFP_AMPA_Block = neo.Block(name='STN_LFP_AMPA')
+    STN_LFP_AMPA_seg = neo.Segment(name='segment_0')
+    STN_LFP_AMPA_Block.segments.append(STN_LFP_AMPA_seg)
+    STN_LFP_AMPA_signal = neo.AnalogSignal(STN_LFP_AMPA, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
+    STN_LFP_AMPA_seg.analogsignals.append(STN_LFP_AMPA_signal)
+    w = neo.io.NeoMatlabIO(filename="/Simulation_Output_Results/"+simulation_label+"/STN_LFP_AMPA.mat")
+    w.write_block(STN_LFP_AMPA_Block)
 
-	STN_LFP_GABAa_Block = neo.Block(name='STN_LFP_GABAa')
-	STN_LFP_GABAa_seg = neo.Segment(name='segment_0')
-	STN_LFP_GABAa_Block.segments.append(STN_LFP_GABAa_seg)
-	STN_LFP_GABAa_signal = neo.AnalogSignal(STN_LFP_GABAa, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
-	STN_LFP_GABAa_seg.analogsignals.append(STN_LFP_GABAa_signal)
-	w = neo.io.NeoMatlabIO(filename="/Simulation_Output_Results/"+simulation_label+"/STN_LFP_GABAa.mat")
-	w.write_block(STN_LFP_GABAa_Block)
-	"""
+    STN_LFP_GABAa_Block = neo.Block(name='STN_LFP_GABAa')
+    STN_LFP_GABAa_seg = neo.Segment(name='segment_0')
+    STN_LFP_GABAa_Block.segments.append(STN_LFP_GABAa_seg)
+    STN_LFP_GABAa_signal = neo.AnalogSignal(STN_LFP_GABAa, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
+    STN_LFP_GABAa_seg.analogsignals.append(STN_LFP_GABAa_signal)
+    w = neo.io.NeoMatlabIO(filename="/Simulation_Output_Results/"+simulation_label+"/STN_LFP_GABAa.mat")
+    w.write_block(STN_LFP_GABAa_Block)
+    """
 
     print("Steady State Simulation Done!")
 
