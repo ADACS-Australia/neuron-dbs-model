@@ -17,4 +17,5 @@ cd $PYNN
 diff -ru . $OLDPWD/$MODEL/Updated_PyNN_Files/ | patch -p0
 
 # Compile
+cd neuron/nmodl
 nrnivmodl
