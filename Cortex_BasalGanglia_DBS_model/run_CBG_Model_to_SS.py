@@ -181,7 +181,7 @@ if __name__ == "__main__":
     print("Setting up simulation...")
     # Setup simulation
     setup(timestep=0.01, rngseed=3695)
-    steady_state_duration = 6000.0  # Duration of simulation steady state
+    steady_state_duration = 1.0  # Duration of simulation steady state
     simulation_duration = steady_state_duration  # Total simulation time
     rec_sampling_interval = 0.5  # Fs = 2000Hz
     Pop_size = 100
@@ -582,8 +582,9 @@ if __name__ == "__main__":
         )
 
     # Run the model to the steady state
-    print("Running model...")
+    print("Running model to steady state...")
     run_to_steady_state(steady_state_duration)
+    print("Done.")
 
     # Calculate the LFP and biomarkers, etc.
     STN_AMPA_i = np.array(STN_Pop.get_data("AMPA.i").segments[0].analogsignals[0])
@@ -647,19 +648,21 @@ if __name__ == "__main__":
     )
     STN_LFP_GABAa = STN_LFP_GABAa_1 - STN_LFP_GABAa_2
 
+    print("Writing data...")
+
     # Simulation Label for writing model output data - uncomment to write the specified variables to file
     simulation_label = "Steady_State_Simulation"
 
     output_path = Path("Simulation_Output_Results")
 
     # Write population membrane voltage data to file
-    Cortical_Pop.write_data(output_path / simulation_label / "Cortical_Pop/Cortical_Collateral_v.mat", 'collateral(0.5).v', clear=False)
-    Cortical_Pop.write_data(output_path / simulation_label / "Cortical_Pop/Cortical_Soma_v.mat", 'soma(0.5).v', clear=True)
-    Interneuron_Pop.write_data(output_path / simulation_label / "Interneuron_Pop/Interneuron_Soma_v.mat", 'soma(0.5).v', clear=True)
-    STN_Pop.write_data(output_path / simulation_label / "STN_Pop/STN_Soma_v.mat", 'soma(0.5).v', clear=True)
-    GPe_Pop.write_data(output_path / simulation_label / "GPe_Pop/GPe_Soma_v.mat", 'soma(0.5).v', clear=True)
-    GPi_Pop.write_data(output_path / simulation_label / "GPi_Pop/GPi_Soma_v.mat", 'soma(0.5).v', clear=True)
-    Thalamic_Pop.write_data(output_path / simulation_label / "Thalamic_Pop/Thalamic_Soma_v.mat", 'soma(0.5).v', clear=True)
+    Cortical_Pop.write_data(str(output_path / simulation_label / "Cortical_Pop/Cortical_Collateral_v.mat"), 'collateral(0.5).v', clear=False)
+    Cortical_Pop.write_data(str(output_path / simulation_label / "Cortical_Pop/Cortical_Soma_v.mat"), 'soma(0.5).v', clear=True)
+    Interneuron_Pop.write_data(str(output_path / simulation_label / "Interneuron_Pop/Interneuron_Soma_v.mat"), 'soma(0.5).v', clear=True)
+    STN_Pop.write_data(str(output_path / simulation_label / "STN_Pop/STN_Soma_v.mat"), 'soma(0.5).v', clear=True)
+    GPe_Pop.write_data(str(output_path / simulation_label / "GPe_Pop/GPe_Soma_v.mat"), 'soma(0.5).v', clear=True)
+    GPi_Pop.write_data(str(output_path / simulation_label / "GPi_Pop/GPi_Soma_v.mat"), 'soma(0.5).v', clear=True)
+    Thalamic_Pop.write_data(str(output_path / simulation_label / "Thalamic_Pop/Thalamic_Soma_v.mat"), 'soma(0.5).v', clear=True)
 
     # Write the STN LFP to .mat file
     STN_LFP_Block = neo.Block(name='STN_LFP')
