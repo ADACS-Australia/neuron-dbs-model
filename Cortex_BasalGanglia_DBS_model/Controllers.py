@@ -4,7 +4,7 @@ Created on Wed April 03 14:27:26 2019
 
 Description: Controller class implementations for:
 
-			https://www.frontiersin.org/articles/10.3389/fnins.2020.00166/
+            https://www.frontiersin.org/articles/10.3389/fnins.2020.00166/
 
 @author: John Fleming, john.fleming@ucdconnect.ie
 """
