@@ -68,6 +68,7 @@ import math
 from scipy import signal
 import os
 import sys
+from pathlib import Path
 
 # Import global variables for GPe DBS
 import Global_Variables as GV
@@ -647,14 +648,16 @@ if __name__ == "__main__":
     # Simulation Label for writing model output data - uncomment to write the specified variables to file
     simulation_label = "Steady_State_Simulation"
 
+    output_path = Path("Simulation_Output_Results")
+
     # Write population membrane voltage data to file
-    Cortical_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/Cortical_Pop/Cortical_Collateral_v.mat", 'collateral(0.5).v', clear=False)
-    Cortical_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/Cortical_Pop/Cortical_Soma_v.mat", 'soma(0.5).v', clear=True)
-    Interneuron_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/Interneuron_Pop/Interneuron_Soma_v.mat", 'soma(0.5).v', clear=True)
-    STN_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/STN_Pop/STN_Soma_v.mat", 'soma(0.5).v', clear=True)
-    GPe_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/GPe_Pop/GPe_Soma_v.mat", 'soma(0.5).v', clear=True)
-    GPi_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/GPi_Pop/GPi_Soma_v.mat", 'soma(0.5).v', clear=True)
-    Thalamic_Pop.write_data("/Simulation_Output_Results/"+simulation_label+"/Thalamic_Pop/Thalamic_Soma_v.mat", 'soma(0.5).v', clear=True)
+    Cortical_Pop.write_data(output_path / simulation_label / "Cortical_Pop/Cortical_Collateral_v.mat", 'collateral(0.5).v', clear=False)
+    Cortical_Pop.write_data(output_path / simulation_label / "Cortical_Pop/Cortical_Soma_v.mat", 'soma(0.5).v', clear=True)
+    Interneuron_Pop.write_data(output_path / simulation_label / "Interneuron_Pop/Interneuron_Soma_v.mat", 'soma(0.5).v', clear=True)
+    STN_Pop.write_data(output_path / simulation_label / "STN_Pop/STN_Soma_v.mat", 'soma(0.5).v', clear=True)
+    GPe_Pop.write_data(output_path / simulation_label / "GPe_Pop/GPe_Soma_v.mat", 'soma(0.5).v', clear=True)
+    GPi_Pop.write_data(output_path / simulation_label / "GPi_Pop/GPi_Soma_v.mat", 'soma(0.5).v', clear=True)
+    Thalamic_Pop.write_data(output_path / simulation_label / "Thalamic_Pop/Thalamic_Soma_v.mat", 'soma(0.5).v', clear=True)
 
     # Write the STN LFP to .mat file
     STN_LFP_Block = neo.Block(name='STN_LFP')
@@ -663,7 +666,7 @@ if __name__ == "__main__":
     STN_LFP_signal = neo.AnalogSignal(STN_LFP, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
     STN_LFP_seg.analogsignals.append(STN_LFP_signal)
 
-    w = neo.io.NeoMatlabIO(filename="/Simulation_Output_Results/"+simulation_label+"/STN_LFP.mat")
+    w = neo.io.NeoMatlabIO(filename=output_path / simulation_label / "STN_LFP.mat")
     w.write_block(STN_LFP_Block)
 
     # Write LFP AMPA and GABAa conmponents to file
@@ -672,7 +675,7 @@ if __name__ == "__main__":
     STN_LFP_AMPA_Block.segments.append(STN_LFP_AMPA_seg)
     STN_LFP_AMPA_signal = neo.AnalogSignal(STN_LFP_AMPA, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
     STN_LFP_AMPA_seg.analogsignals.append(STN_LFP_AMPA_signal)
-    w = neo.io.NeoMatlabIO(filename="/Simulation_Output_Results/"+simulation_label+"/STN_LFP_AMPA.mat")
+    w = neo.io.NeoMatlabIO(filename=output_path / simulation_label / "STN_LFP_AMPA.mat")
     w.write_block(STN_LFP_AMPA_Block)
 
     STN_LFP_GABAa_Block = neo.Block(name='STN_LFP_GABAa')
@@ -680,7 +683,7 @@ if __name__ == "__main__":
     STN_LFP_GABAa_Block.segments.append(STN_LFP_GABAa_seg)
     STN_LFP_GABAa_signal = neo.AnalogSignal(STN_LFP_GABAa, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
     STN_LFP_GABAa_seg.analogsignals.append(STN_LFP_GABAa_signal)
-    w = neo.io.NeoMatlabIO(filename="/Simulation_Output_Results/"+simulation_label+"/STN_LFP_GABAa.mat")
+    w = neo.io.NeoMatlabIO(filename=output_path / simulation_label / "STN_LFP_GABAa.mat")
     w.write_block(STN_LFP_GABAa_Block)
 
     print("Steady State Simulation Done!")
