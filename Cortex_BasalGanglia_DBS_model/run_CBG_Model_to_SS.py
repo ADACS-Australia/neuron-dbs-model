@@ -543,7 +543,7 @@ if __name__ == "__main__":
     GPe_DBS_Signal_neuron = []
     GPe_DBS_times_neuron = []
     updated_GPe_DBS_signal = []
-    for i in range(0, Pop_size):
+    for i in range(0, Cortical_Pop.local_size):
 
         # Neuron vector of GPe DBS signals
         GPe_DBS_Signal_neuron.append(h.Vector([0, 0]))
