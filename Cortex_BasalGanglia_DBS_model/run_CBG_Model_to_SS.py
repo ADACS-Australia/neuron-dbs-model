@@ -254,27 +254,22 @@ if __name__ == "__main__":
     Cortical_Pop.inject(cortical_modulation_current)
 
     # Generate Noisy current sources for cortical pyramidal and interneuron populations
-    Cortical_Pop_Membrane_Noise = Pop_size * [
-        NoisyCurrentSource(
-            mean=0, stdev=0.005, start=0.0, stop=simulation_duration, dt=1.0
-        )
-    ]
-    Interneuron_Pop_Membrane_Noise = Pop_size * [
-        NoisyCurrentSource(
-            mean=0, stdev=0.005, start=0.0, stop=simulation_duration, dt=1.0
-        )
-    ]
-
     # Inject each membrane noise current into each cortical and interneuron in network
-    for id in Cortical_Pop.local_cells:
-        ii = Cortical_Pop.id_to_index(id)
-        Cortical_Pop[ii].inject(Cortical_Pop_Membrane_Noise[ii])
+    for cell in Cortical_Pop:
+        cell.inject(
+            NoisyCurrentSource(
+                mean=0, stdev=0.005, start=0.0, stop=simulation_duration, dt=1.0
+            )
+        )
 
-    for id in Interneuron_Pop.local_cells:
-        ii = Interneuron_Pop.id_to_index(id)
-        Interneuron_Pop[ii].inject(Interneuron_Pop_Membrane_Noise[ii])
+    for cell in Interneuron_Pop:
+        cell.inject(
+            NoisyCurrentSource(
+                mean=0, stdev=0.005, start=0.0, stop=simulation_duration, dt=1.0
+            )
+        )
 
-    Striatal_Pop.set(spike_times = striatal_spike_times[:,0])
+    Striatal_Pop.set(spike_times=striatal_spike_times[:, 0])
 
     # Load cortical positions - Comment/Remove to generate new positions
     Cortical_Neuron_xy_Positions = np.loadtxt("cortical_xy_pos.txt", delimiter=",")
@@ -526,7 +521,7 @@ if __name__ == "__main__":
         collateral_rx_seq[ii] = Sequence(collateral_rx[ii, :].flatten())
 
     # Assign transfer resistances values to collaterals
-    Cortical_Pop.set(collateral_rx = collateral_rx_seq)
+    Cortical_Pop.set(collateral_rx=collateral_rx_seq)
 
     # Initialise STN LFP list
     STN_LFP = []
