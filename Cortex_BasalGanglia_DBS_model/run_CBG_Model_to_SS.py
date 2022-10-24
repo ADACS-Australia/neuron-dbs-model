@@ -273,17 +273,15 @@ if __name__ == "__main__":
     Cortical_Pop.inject(cortical_modulation_current)
 
     # Generate Noisy current sources for cortical pyramidal and interneuron populations
-    Cortical_Pop_Membrane_Noise = [
+    Cortical_Pop_Membrane_Noise = Pop_size * [
         NoisyCurrentSource(
             mean=0, stdev=0.005, start=0.0, stop=simulation_duration, dt=1.0
         )
-        for count in range(Pop_size)
     ]
-    Interneuron_Pop_Membrane_Noise = [
+    Interneuron_Pop_Membrane_Noise = Pop_size * [
         NoisyCurrentSource(
             mean=0, stdev=0.005, start=0.0, stop=simulation_duration, dt=1.0
         )
-        for count in range(Pop_size)
     ]
 
     # Inject each membrane noise current into each cortical and interneuron in network
