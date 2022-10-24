@@ -265,20 +265,14 @@ if __name__ == "__main__":
         )
     ]
 
-    # Construct masks for local indices
-    local_cortical_neurons = [Cortical_Pop.id_to_index(id) for id in Cortical_Pop.local_cells]
-    local_interneurons = [Interneuron_Pop.id_to_index(id) for id in Interneuron_Pop.local_cells]
-
     # Inject each membrane noise current into each cortical and interneuron in network
-    for Cortical_Neuron, Cortical_Neuron_Membrane_Noise in zip(
-        Cortical_Pop, Cortical_Pop_Membrane_Noise[local_cortical_neurons]
-    ):
-        Cortical_Neuron.inject(Cortical_Neuron_Membrane_Noise)
+    for id in Cortical_Pop.local_cells:
+        ii = Cortical_Pop.id_to_index(id)
+        Cortical_Pop[ii].inject(Cortical_Pop_Membrane_Noise[ii])
 
-    for Interneuron, Interneuron_Membrane_Noise in zip(
-        Interneuron_Pop, Interneuron_Pop_Membrane_Noise[local_interneurons]
-    ):
-        Interneuron.inject(Interneuron_Membrane_Noise)
+    for id in Interneuron_Pop.local_cells:
+        ii = Interneuron_Pop.id_to_index(id)
+        Interneuron_Pop[ii].inject(Interneuron_Pop_Membrane_Noise[ii])
 
     # Update the spike times for the striatal populations
     for id in Striatal_Pop.local_cells:
