@@ -178,9 +178,9 @@ def calculate_avg_beta_power(lfp_signal, tail_length, beta_b, beta_a):
 
 if __name__ == "__main__":
 
-    print("Setting up simulation...")
     # Setup simulation
-    setup(timestep=0.01, rngseed=3695)
+    rank = setup(timestep=0.01, rngseed=3695)
+    if rank==0: print("\nSetting up simulation...")
     steady_state_duration = 6000.0  # Duration of simulation steady state
     simulation_duration = steady_state_duration  # Total simulation time
     rec_sampling_interval = 0.5  # Fs = 2000Hz
@@ -582,9 +582,9 @@ if __name__ == "__main__":
         )
 
     # Run the model to the steady state
-    print("Running model to steady state...")
+    if rank==0: print("Running model to steady state...")
     run_to_steady_state(steady_state_duration)
-    print("Done.")
+    if rank==0: print("Done.")
 
     # Calculate the LFP and biomarkers, etc.
     STN_AMPA_i = np.array(STN_Pop.get_data("AMPA.i").segments[0].analogsignals[0])
@@ -648,7 +648,7 @@ if __name__ == "__main__":
     )
     STN_LFP_GABAa = STN_LFP_GABAa_1 - STN_LFP_GABAa_2
 
-    print("Writing data...")
+    if rank==0: print("Writing data...")
 
     # Simulation Label for writing model output data - uncomment to write the specified variables to file
     simulation_label = "Steady_State_Simulation"
@@ -691,6 +691,6 @@ if __name__ == "__main__":
     w = neo.io.NeoMatlabIO(filename=output_path / simulation_label / "STN_LFP_GABAa.mat")
     w.write_block(STN_LFP_GABAa_Block)
 
-    print("Steady State Simulation Done!")
+    if rank==0: print("Steady State Simulation Done!")
 
     end()
