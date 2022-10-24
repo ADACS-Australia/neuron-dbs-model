@@ -91,7 +91,7 @@ class Constant_Controller:
 
     def setConstantValue(self, constant_value):
         """Sets the constant controller output"""
-        self.ConstantValue = ConstantValue
+        self.ConstantValue = constant_value
 
     def setTs(self, Ts):
         """Sets the sampling rate of the controller"""
