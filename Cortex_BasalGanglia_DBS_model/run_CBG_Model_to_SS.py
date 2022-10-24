@@ -167,7 +167,7 @@ if __name__ == "__main__":
     rank = setup(timestep=0.01, rngseed=3695)
     if rank == 0:
         print("\nSetting up simulation...")
-    steady_state_duration = 6000.0  # Duration of simulation steady state
+    steady_state_duration = 30.0  # Duration of simulation steady state
     simulation_duration = steady_state_duration  # Total simulation time
     rec_sampling_interval = 0.5  # Fs = 2000Hz
     Pop_size = 100
