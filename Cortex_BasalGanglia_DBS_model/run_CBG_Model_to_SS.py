@@ -274,10 +274,7 @@ if __name__ == "__main__":
         ii = Interneuron_Pop.id_to_index(id)
         Interneuron_Pop[ii].inject(Interneuron_Pop_Membrane_Noise[ii])
 
-    # Update the spike times for the striatal populations
-    for id in Striatal_Pop.local_cells:
-        i = Striatal_Pop.id_to_index(id)
-        Striatal_Pop[i].spike_times = striatal_spike_times[i][0]
+    Striatal_Pop.set(spike_times = striatal_spike_times[:,0])
 
     # Load cortical positions - Comment/Remove to generate new positions
     Cortical_Neuron_xy_Positions = np.loadtxt("cortical_xy_pos.txt", delimiter=",")
