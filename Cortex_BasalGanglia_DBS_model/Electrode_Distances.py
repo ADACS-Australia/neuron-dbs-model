@@ -53,8 +53,8 @@ def distances_to_electrode(src_electrode, tgt_pop, coordinate_mask=None):
     cell_electrode_distances = numpy.zeros((tgt_pop.local_size, 1))
     cell_electrode_distances.flatten()
 
-    for cell_id, tgt_cell in enumerate(tgt_pop):
-        cell_electrode_distances[cell_id] = distance_to_electrode(
+    for ii, tgt_cell in enumerate(tgt_pop):
+        cell_electrode_distances[ii] = distance_to_electrode(
             src_electrode, tgt_cell, mask=coordinate_mask
         )
 
@@ -88,12 +88,12 @@ def collateral_distances_to_electrode(src_electrode, tgt_pop, L, nseg):
     z_coordinate = L * segment_centres - L / 2
     # print(z_coordinate)
 
-    for cell_id, tgt_cell in enumerate(tgt_pop):
+    for ii, tgt_cell in enumerate(tgt_pop):
         for seg in numpy.arange(nseg):
             tgt_cell.position = numpy.array(
                 [tgt_cell.position[0], tgt_cell.position[1], z_coordinate[seg]]
             )
-            segment_electrode_distances[cell_id][seg] = distance_to_electrode(
+            segment_electrode_distances[ii][seg] = distance_to_electrode(
                 src_electrode, tgt_cell
             )
 

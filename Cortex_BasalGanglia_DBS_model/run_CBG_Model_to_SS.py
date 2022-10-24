@@ -277,10 +277,9 @@ if __name__ == "__main__":
     Cortical_Neuron_y_Positions = Cortical_Neuron_xy_Positions[1, :]
 
     # Set cortical xy positions to those loaded in
-    for cell_id in Cortical_Pop.local_cells:
-        ii = Cortical_Pop.id_to_index(cell_id)
-        Cortical_Pop[ii].position[0] = Cortical_Neuron_x_Positions[ii]
-        Cortical_Pop[ii].position[1] = Cortical_Neuron_y_Positions[ii]
+    for ii, cell in enumerate(Cortical_Pop):
+        cell.position[0] = Cortical_Neuron_x_Positions[ii]
+        cell.position[1] = Cortical_Neuron_y_Positions[ii]
 
     # Load STN positions - Comment/Remove to generate new positions
     STN_Neuron_xy_Positions = np.loadtxt("STN_xy_pos.txt", delimiter=",")
@@ -288,11 +287,10 @@ if __name__ == "__main__":
     STN_Neuron_y_Positions = STN_Neuron_xy_Positions[1, :]
 
     # Set STN xy positions to those loaded in
-    for cell_id in STN_Pop.local_cells:
-        ii = STN_Pop.id_to_index(cell_id)
-        STN_Pop[ii].position[0] = STN_Neuron_x_Positions[ii]
-        STN_Pop[ii].position[1] = STN_Neuron_y_Positions[ii]
-        STN_Pop[ii].position[2] = 500
+    for ii, cell in enumerate(STN_Pop):
+        cell.position[0] = STN_Neuron_x_Positions[ii]
+        cell.position[1] = STN_Neuron_y_Positions[ii]
+        cell.position[2] = 500
 
     """
     # Position Check -
