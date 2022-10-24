@@ -53,6 +53,9 @@ from pathlib import Path
 # Import global variables for GPe DBS
 import Global_Variables as GV
 
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+
 
 def generate_poisson_spike_times(
     pop_size, start_time, duration, fr, timestep, random_seed
@@ -582,6 +585,7 @@ if __name__ == "__main__":
         * 1e-6
     )
     STN_LFP = STN_LFP_1 - STN_LFP_2
+    STN_LFP = comm.allreduce(STN_LFP, op=MPI.SUM)
 
     # STN LFP AMPA and GABAa Contributions
     STN_LFP_AMPA_1 = (
@@ -601,6 +605,8 @@ if __name__ == "__main__":
         * 1e-6
     )
     STN_LFP_AMPA = STN_LFP_AMPA_1 - STN_LFP_AMPA_2
+    STN_LFP_AMPA = comm.allreduce(STN_LFP_AMPA, op=MPI.SUM)
+
     STN_LFP_GABAa_1 = (
         (1 / (4 * math.pi * sigma))
         * np.sum(
@@ -620,6 +626,7 @@ if __name__ == "__main__":
         * 1e-6
     )
     STN_LFP_GABAa = STN_LFP_GABAa_1 - STN_LFP_GABAa_2
+    STN_LFP_GABAa = comm.allreduce(STN_LFP_GABAa, op=MPI.SUM)
 
     if rank == 0:
         print("Writing data...")
