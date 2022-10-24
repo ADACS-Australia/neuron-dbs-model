@@ -12,6 +12,7 @@ Description: Cortico-Basal Ganglia Network Model implemented in PyNN using the s
 @author: John Fleming, john.fleming@ucdconnect.ie
 """
 
+import sys
 import neuron
 
 h = neuron.h
@@ -640,7 +641,10 @@ if __name__ == "__main__":
     # Simulation Label for writing model output data - uncomment to write the specified variables to file
     simulation_label = "Steady_State_Simulation"
 
-    output_path = Path("Simulation_Output_Results")
+    if len(sys.argv) > 1:
+        output_path = Path(sys.argv[1])
+    else:
+        output_path = Path("Simulation_Output_Results")
 
     # Write population membrane voltage data to file
     Cortical_Pop.write_data(
