@@ -181,7 +181,7 @@ if __name__ == "__main__":
     print("Setting up simulation...")
     # Setup simulation
     setup(timestep=0.01, rngseed=3695)
-    steady_state_duration = 1.0  # Duration of simulation steady state
+    steady_state_duration = 6000.0  # Duration of simulation steady state
     simulation_duration = steady_state_duration  # Total simulation time
     rec_sampling_interval = 0.5  # Fs = 2000Hz
     Pop_size = 100
