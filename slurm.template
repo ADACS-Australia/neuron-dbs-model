@@ -6,13 +6,13 @@
 #SBATCH --output=neuron.qout
 #SBATCH --time=0-02:00:00
 #SBATCH --mem=4G
-#SBATCH --account=<account>
 
 source ozstar_modules.sh
 source <path/to/venv/>
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export PYNN_OUTPUT_DIRNAME="results_${SLURM_NTASKS_PER_NODE}"
+export PYTHONUNBUFFERED=yes
 
 cd Cortex_BasalGanglia_DBS_model/
 mkdir -p ${PYNN_OUTPUT_DIRNAME}
