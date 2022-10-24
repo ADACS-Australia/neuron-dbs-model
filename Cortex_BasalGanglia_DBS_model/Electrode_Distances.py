@@ -50,8 +50,7 @@ def distances_to_electrode(src_electrode, tgt_pop, coordinate_mask=None):
     'src_electrode' is the electrode positon in xyz co-ordinates.
     'tgt_pop' is the population of cells that the distance will be calculated to.
     """
-    row_size, col_size = tgt_pop.positions.shape
-    cell_electrode_distances = numpy.zeros((col_size, 1))
+    cell_electrode_distances = numpy.zeros((tgt_pop.local_size, 1))
     cell_electrode_distances.flatten()
 
     for cell_id, tgt_cell in enumerate(tgt_pop):
@@ -78,8 +77,7 @@ def collateral_distances_to_electrode(src_electrode, tgt_pop, L, nseg):
     segment to the stimulating electrode. Each row corresponds to a collateral of a single
     cortical cell. Each column corresponds to a segment of the collateral.
     """
-    row_size, col_size = tgt_pop.positions.shape
-    segment_electrode_distances = numpy.zeros((col_size, nseg))
+    segment_electrode_distances = numpy.zeros((tgt_pop.local_size, nseg))
 
     segment_centres = numpy.arange(0, nseg + 3 - 1) * (1 / nseg)
     segment_centres = segment_centres - (1 / (2 * nseg))
