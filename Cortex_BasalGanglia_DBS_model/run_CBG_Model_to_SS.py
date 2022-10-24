@@ -54,6 +54,7 @@ from pathlib import Path
 import Global_Variables as GV
 
 from mpi4py import MPI
+
 comm = MPI.COMM_WORLD
 
 
@@ -517,7 +518,9 @@ if __name__ == "__main__":
     )
 
     # Convert ndarray to array of Sequence objects - needed to set cortical collateral transfer resistances
-    collateral_rx_seq = np.ndarray(shape=(1, Cortical_Pop.local_size), dtype=Sequence).flatten()
+    collateral_rx_seq = np.ndarray(
+        shape=(1, Cortical_Pop.local_size), dtype=Sequence
+    ).flatten()
     for ii in range(0, Cortical_Pop.local_size):
         collateral_rx_seq[ii] = Sequence(collateral_rx[ii, :].flatten())
 
@@ -562,8 +565,12 @@ if __name__ == "__main__":
         print("Done.")
 
     # Calculate the LFP and biomarkers, etc.
-    STN_AMPA_i = np.array(STN_Pop.get_data("AMPA.i", gather=False).segments[0].analogsignals[0])
-    STN_GABAa_i = np.array(STN_Pop.get_data("GABAa.i", gather=False).segments[0].analogsignals[0])
+    STN_AMPA_i = np.array(
+        STN_Pop.get_data("AMPA.i", gather=False).segments[0].analogsignals[0]
+    )
+    STN_GABAa_i = np.array(
+        STN_Pop.get_data("GABAa.i", gather=False).segments[0].analogsignals[0]
+    )
     STN_Syn_i = STN_AMPA_i + STN_GABAa_i
 
     # STN LFP Calculation - Syn_i is in units of nA -> LFP units are mV
