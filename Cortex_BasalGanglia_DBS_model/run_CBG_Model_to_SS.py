@@ -18,25 +18,14 @@ h = neuron.h
 
 from pyNN.neuron import (
     setup,
-    run,
-    reset,
-    run_until,
     run_to_steady_state,
-    run_from_steady_state,
     end,
     simulator,
     Population,
-    SpikeSourcePoisson,
     SpikeSourceArray,
     Projection,
-    OneToOneConnector,
-    AllToAllConnector,
     FromFileConnector,
-    FixedNumberPreConnector,
     StaticSynapse,
-    NativeCellType,
-    SpikeSourcePoisson,
-    SpikeSourceArray,
     NoisyCurrentSource,
     StepCurrentSource,
 )
@@ -54,20 +43,11 @@ from Electrode_Distances import (
     collateral_distances_to_electrode,
 )
 from pyNN.parameters import Sequence
-from Controllers import (
-    Constant_Controller,
-    ON_OFF_Controller,
-    Dual_Threshold_Controller,
-    standard_PID_Controller,
-)
-import random
 import neo.io
 import quantities as pq
 import numpy as np
 import math
 from scipy import signal
-import os
-import sys
 from pathlib import Path
 
 # Import global variables for GPe DBS
@@ -182,7 +162,7 @@ if __name__ == "__main__":
     rank = setup(timestep=0.01, rngseed=3695)
     if rank == 0:
         print("\nSetting up simulation...")
-    steady_state_duration = 6000.0  # Duration of simulation steady state
+    steady_state_duration = 50  # Duration of simulation steady state
     simulation_duration = steady_state_duration  # Total simulation time
     rec_sampling_interval = 0.5  # Fs = 2000Hz
     Pop_size = 100

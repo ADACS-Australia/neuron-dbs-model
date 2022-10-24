@@ -19,25 +19,14 @@ h = neuron.h
 
 from pyNN.neuron import (
     setup,
-    run,
-    reset,
     run_until,
-    run_to_steady_state,
-    run_from_steady_state,
     end,
     simulator,
     Population,
-    SpikeSourcePoisson,
     SpikeSourceArray,
     Projection,
-    OneToOneConnector,
-    AllToAllConnector,
     FromFileConnector,
-    FixedNumberPreConnector,
     StaticSynapse,
-    NativeCellType,
-    SpikeSourcePoisson,
-    SpikeSourceArray,
     NoisyCurrentSource,
     StepCurrentSource,
 )
@@ -55,20 +44,12 @@ from Electrode_Distances import (
     collateral_distances_to_electrode,
 )
 from pyNN.parameters import Sequence
-from Controllers import (
-    Constant_Controller,
-    ON_OFF_Controller,
-    Dual_Threshold_Controller,
-    standard_PID_Controller,
-)
-import random
+from Controllers import standard_PID_Controller
 import neo.io
 import quantities as pq
 import numpy as np
 import math
 from scipy import signal
-import os
-import sys
 
 # Import global variables for GPe DBS
 import Global_Variables as GV
