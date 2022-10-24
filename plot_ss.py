@@ -2,11 +2,14 @@
 
 from matplotlib import pyplot as plt
 from neo.io import NeoMatlabIO
-import sys
+import argparse
 
-filename = "Cortex_BasalGanglia_DBS_model/Simulation_Output_Results/Steady_State_Simulation/STN_LFP.mat"
+parser = argparse.ArgumentParser(description="Plot STN_LFP.mat files")
+parser.add_argument('filename', help='file to plot')
+parser.add_argument('-s','--save',action='store_true',default=False)
+args = parser.parse_args()
 
-block = NeoMatlabIO(filename).read_block()
+block = NeoMatlabIO(args.filename).read_block()
 signal = block.segments[0].analogsignals[0]
 
 plt.plot(signal)
@@ -14,10 +17,7 @@ plt.plot(signal)
 plt.xlabel("Time")
 plt.ylabel("Signal")
 
-# plt.show()
-
-if len(sys.argv) > 1:
-    n = sys.argv[1]
+if args.save:
+    plt.savefig("plot.pdf")
 else:
-    n = 1
-plt.savefig(f"plot_{n}.pdf")
+    plt.show()
