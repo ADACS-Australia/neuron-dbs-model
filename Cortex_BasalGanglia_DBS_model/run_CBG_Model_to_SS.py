@@ -282,9 +282,10 @@ if __name__ == "__main__":
     Cortical_Neuron_y_Positions = Cortical_Neuron_xy_Positions[1, :]
 
     # Set cortical xy positions to those loaded in
-    for cell_id, Cortical_cell in enumerate(Cortical_Pop):
-        Cortical_cell.position[0] = Cortical_Neuron_x_Positions[cell_id]
-        Cortical_cell.position[1] = Cortical_Neuron_y_Positions[cell_id]
+    for cell_id in Cortical_Pop.local_cells:
+        ii = Cortical_Pop.id_to_index(cell_id)
+        Cortical_Pop[ii].position[0] = Cortical_Neuron_x_Positions[ii]
+        Cortical_Pop[ii].position[1] = Cortical_Neuron_y_Positions[ii]
 
     # Load STN positions - Comment/Remove to generate new positions
     STN_Neuron_xy_Positions = np.loadtxt("STN_xy_pos.txt", delimiter=",")
@@ -292,10 +293,11 @@ if __name__ == "__main__":
     STN_Neuron_y_Positions = STN_Neuron_xy_Positions[1, :]
 
     # Set STN xy positions to those loaded in
-    for cell_id, STN_cell in enumerate(STN_Pop):
-        STN_cell.position[0] = STN_Neuron_x_Positions[cell_id]
-        STN_cell.position[1] = STN_Neuron_y_Positions[cell_id]
-        STN_cell.position[2] = 500
+    for cell_id in STN_Pop.local_cells:
+        ii = STN_Pop.id_to_index(cell_id)
+        STN_Pop[ii].position[0] = STN_Neuron_x_Positions[ii]
+        STN_Pop[ii].position[1] = STN_Neuron_y_Positions[ii]
+        STN_Pop[ii].position[2] = 500
 
     """
     # Position Check -
@@ -524,8 +526,7 @@ if __name__ == "__main__":
         collateral_rx_seq[ii] = Sequence(collateral_rx[ii, :].flatten())
 
     # Assign transfer resistances values to collaterals
-    for ii, cortical_neuron in enumerate(Cortical_Pop):
-        cortical_neuron.collateral_rx = collateral_rx_seq[ii]
+    Cortical_Pop.set(collateral_rx = collateral_rx_seq)
 
     # Initialise STN LFP list
     STN_LFP = []
