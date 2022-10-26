@@ -41,6 +41,27 @@ For convenience, you can also use the provided run script instead
 $ PYNN_OUTPUT_DIRNAME="my_results_dir" ./run_ss.sh 4
 ```
 
+# Plotting results
+To plot the DBS signal
+```shel
+$ ./plot_ss.py Cortex_BasalGanglia_DBS_model/Simulation_Output_Results/Steady_State_Simulation/STN_LFP.mat
+```
+
+To save your plot, us the command line option `-s`
+```shell
+$ ./plot_ss.py --help
+usage: plot_ss.py [-h] [-s] filename
+
+Plot STN_LFP.mat files
+
+positional arguments:
+  filename    file to plot
+
+options:
+  -h, --help  show this help message and exit
+  -s, --save
+```
+
 # Installing on OzSTAR
 Steps:
 
