@@ -1,6 +1,12 @@
 # Setup
 Steps:
 
+0) (optional) Create a virtual environment
+```shell
+$ python -m venv neuron-env
+$ source ./neuron-env/bin/activate
+```
+
 1) Install dependencies
 ```shell
 $ pip install -r requirements.txt
