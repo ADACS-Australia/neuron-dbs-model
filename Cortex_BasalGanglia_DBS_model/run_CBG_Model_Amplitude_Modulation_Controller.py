@@ -14,6 +14,7 @@ Description: Cortico-Basal Ganglia Network Model implemented in PyNN using the
 
 @author: John Fleming, john.fleming@ucdconnect.ie
 """
+import os
 import neuron
 from pyNN.neuron import setup, run_until, end, simulator
 from pyNN.parameters import Sequence
@@ -29,6 +30,10 @@ from model import load_network, electrode_distance
 
 # Import global variables for GPe DBS
 import Global_Variables as GV
+
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
 
 h = neuron.h
 
@@ -56,19 +61,20 @@ if __name__ == "__main__":
         kp = float(sys.argv[3])
         ti = float(sys.argv[4])
         td = float(sys.argv[5])
-    print(
-        "INFO: Running simulation for %.0f ms after steady state (%.0f ms) \
-with %s control"
-        % (simulation_runtime, steady_state_duration, controller_type)
-    )
+
     sim_total_time = (
         steady_state_duration + simulation_runtime + timestep
     )  # Total simulation time
     rec_sampling_interval = 0.5  # Signals are sampled every 0.5 ms
-    Pop_size = 100
 
     # Setup simulation
-    setup(timestep=timestep, rngseed=rng_seed)
+    rank = setup(timestep=timestep, rngseed=rng_seed)
+
+    if rank == 0:
+        print(
+            "INFO: Running simulation for %.0f ms after steady state (%.0f ms) with %s control"
+            % (simulation_runtime, steady_state_duration, controller_type)
+        )
 
     # Make beta band filter centred on 25Hz (cutoff frequencies are 21-29 Hz)
     # for biomarker estimation
@@ -85,7 +91,10 @@ with %s control"
     # Set initial values for cell membrane voltages
     v_init = -68
 
+    if rank == 0:
+        print("Loading network...")
     (
+        Pop_size,
         striatal_spike_times,
         Cortical_Pop,
         Interneuron_Pop,
@@ -107,11 +116,7 @@ with %s control"
         prj_ThalamicCortical,
         prj_CorticalThalamic,
         GPe_stimulation_order,
-        _,
-        _,
-    ) = load_network(
-        Pop_size, steady_state_duration, sim_total_time, simulation_runtime, v_init
-    )
+    ) = load_network(steady_state_duration, sim_total_time, simulation_runtime, v_init)
 
     # Define state variables to record from each population
     Cortical_Pop.record("soma(0.5).v", sampling_interval=rec_sampling_interval)
@@ -157,13 +162,15 @@ with %s control"
 
     # Convert ndarray to array of Sequence objects - needed to set cortical
     # collateral transfer resistances
-    collateral_rx_seq = np.ndarray(shape=(1, Pop_size), dtype=Sequence).flatten()
-    for ii in range(0, Pop_size):
+    collateral_rx_seq = np.ndarray(
+        shape=(1, Cortical_Pop.local_size), dtype=Sequence
+    ).flatten()
+    for ii in range(0, Cortical_Pop.local_size):
         collateral_rx_seq[ii] = Sequence(collateral_rx[ii, :].flatten())
 
     # Assign transfer resistances values to collaterals
-    for ii, cortical_cell in enumerate(Cortical_Pop):
-        cortical_cell.collateral_rx = collateral_rx_seq[ii]
+    for ii, cell in enumerate(Cortical_Pop):
+        cell.collateral_rx = collateral_rx_seq[ii]
 
     # Create times for when the DBS controller will be called
     # Window length for filtering biomarker
@@ -202,7 +209,9 @@ with %s control"
             MinValue=0.0,
             MaxValue=3.0,
         )
-    output_prefix = "Simulation_Output_Results/Controller_Simulations/Amp/"
+
+    output_dirname = os.environ.get("PYNN_OUTPUT_DIRNAME", "Simulation_Output_Results")
+    output_prefix = f"{output_dirname}/Controller_Simulations/Amp/"
     simulation_identifier = controller.get_label() + "-" + start_timestamp
     simulation_output_dir = output_prefix + simulation_identifier
 
@@ -255,7 +264,7 @@ with %s control"
     GPe_DBS_Signal_neuron = []
     GPe_DBS_times_neuron = []
     updated_GPe_DBS_signal = []
-    for i in range(0, Pop_size):
+    for i in range(0, Cortical_Pop.local_size):
         (
             GPe_DBS_Signal,
             GPe_DBS_times,
@@ -301,25 +310,31 @@ with %s control"
     # Variables for writing simulation data
     last_write_time = steady_state_duration
 
-    print("Loaded the network, loading the steady state")
+    if rank == 0:
+        print("Loaded the network, loading the steady state")
     # Load the steady state
     run_until(steady_state_duration + simulator.state.dt, run_from_steady_state=True)
-    print("Loaded the steady state")
+    if rank == 0:
+        print("Loaded the steady state")
 
     # Reload striatal spike times after loading the steady state
-    for i in range(0, Pop_size):
-        Striatal_Pop[i].spike_times = striatal_spike_times[i][0]
+    Striatal_Pop.set(spike_times=striatal_spike_times[:, 0])
 
     # For loop to integrate the model up to each controller call
     for call_index, call_time in enumerate(controller_call_times):
         # Integrate model to controller_call_time
         run_until(call_time - simulator.state.dt)
 
-        print(("Controller Called at t: %f" % simulator.state.t))
+        if rank == 0:
+            print("Controller Called at t: %f" % simulator.state.t)
 
         # Calculate the LFP and biomarkers, etc.
-        STN_AMPA_i = np.array(STN_Pop.get_data("AMPA.i").segments[0].analogsignals[0])
-        STN_GABAa_i = np.array(STN_Pop.get_data("GABAa.i").segments[0].analogsignals[0])
+        STN_AMPA_i = np.array(
+            STN_Pop.get_data("AMPA.i", gather=False).segments[0].analogsignals[0]
+        )
+        STN_GABAa_i = np.array(
+            STN_Pop.get_data("GABAa.i", gather=False).segments[0].analogsignals[0]
+        )
         STN_Syn_i = STN_AMPA_i + STN_GABAa_i
 
         # STN LFP Calculation - Syn_i is in units of nA -> LFP units are mV
@@ -346,6 +361,7 @@ with %s control"
             * 1e-6
         )
         STN_LFP = np.hstack((STN_LFP, STN_LFP_1 - STN_LFP_2))
+        # TODO: mpi reduce ??
 
         # STN LFP AMPA and GABAa Contributions
         STN_LFP_AMPA_1 = (
@@ -371,6 +387,7 @@ with %s control"
             * 1e-6
         )
         STN_LFP_AMPA = np.hstack((STN_LFP_AMPA, STN_LFP_AMPA_1 - STN_LFP_AMPA_2))
+        # TODO: mpi reduce ??
 
         STN_LFP_GABAa_1 = (
             (1 / (4 * math.pi * sigma))
@@ -395,6 +412,7 @@ with %s control"
             * 1e-6
         )
         STN_LFP_GABAa = np.hstack((STN_LFP_GABAa, STN_LFP_GABAa_1 - STN_LFP_GABAa_2))
+        # TODO: mpi reduce ??
 
         # Biomarker Calculation:
         lfp_beta_average_value = calculate_avg_beta_power(
@@ -403,7 +421,10 @@ with %s control"
             beta_b=beta_b,
             beta_a=beta_a,
         )
-        print("Beta Average: %f" % lfp_beta_average_value)
+        # TODO: probably need an MPI reduce on the above ^
+
+        if rank == 0:
+            print("Beta Average: %f" % lfp_beta_average_value)
 
         # Calculate the updated DBS amplitude
         DBS_amp = controller.update(
@@ -500,6 +521,7 @@ with %s control"
     #                         "/Thalamic_Pop/Thalamic_Soma_v.mat",
     #                         'soma(0.5).v', clear=True)
 
+    # TODO: only master MPI task should write these, not sure if a reduce is required first though...
     # Write controller values to csv files
     controller_measured_beta_values = np.asarray(controller.get_state_history())
     controller_measured_error_values = np.asarray(controller.get_error_history())
@@ -589,6 +611,7 @@ with %s control"
     w = neo.io.NeoMatlabIO(filename=simulation_output_dir + "/DBS_Signal.mat")
     w.write_block(DBS_Block)
 
-    print("Simulation Done!")
+    if rank == 0:
+        print("Simulation Done!")
 
     end()
