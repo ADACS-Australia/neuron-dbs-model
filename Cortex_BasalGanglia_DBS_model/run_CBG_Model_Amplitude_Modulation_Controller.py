@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     if rank == 0:
         print(
-            "INFO: Running simulation for %.0f ms after steady state (%.0f ms) with %s control"
+            "\nINFO: Running simulation for %.0f ms after steady state (%.0f ms) with %s control"
             % (simulation_runtime, steady_state_duration, controller_type)
         )
 
@@ -360,8 +360,9 @@ if __name__ == "__main__":
             )
             * 1e-6
         )
-        STN_LFP = np.hstack((STN_LFP, STN_LFP_1 - STN_LFP_2))
-        # TODO: mpi reduce ??
+        STN_LFP = np.hstack(
+            (STN_LFP, comm.allreduce(STN_LFP_1 - STN_LFP_2, op=MPI.SUM))
+        )
 
         # STN LFP AMPA and GABAa Contributions
         STN_LFP_AMPA_1 = (
@@ -386,8 +387,9 @@ if __name__ == "__main__":
             )
             * 1e-6
         )
-        STN_LFP_AMPA = np.hstack((STN_LFP_AMPA, STN_LFP_AMPA_1 - STN_LFP_AMPA_2))
-        # TODO: mpi reduce ??
+        STN_LFP_AMPA = np.hstack(
+            (STN_LFP_AMPA, comm.allreduce(STN_LFP_AMPA_1 - STN_LFP_AMPA_2, op=MPI.SUM))
+        )
 
         STN_LFP_GABAa_1 = (
             (1 / (4 * math.pi * sigma))
@@ -411,8 +413,12 @@ if __name__ == "__main__":
             )
             * 1e-6
         )
-        STN_LFP_GABAa = np.hstack((STN_LFP_GABAa, STN_LFP_GABAa_1 - STN_LFP_GABAa_2))
-        # TODO: mpi reduce ??
+        STN_LFP_GABAa = np.hstack(
+            (
+                STN_LFP_GABAa,
+                comm.allreduce(STN_LFP_GABAa_1 - STN_LFP_GABAa_2, op=MPI.SUM),
+            )
+        )
 
         # Biomarker Calculation:
         lfp_beta_average_value = calculate_avg_beta_power(
@@ -421,7 +427,6 @@ if __name__ == "__main__":
             beta_b=beta_b,
             beta_a=beta_a,
         )
-        # TODO: probably need an MPI reduce on the above ^
 
         if rank == 0:
             print("Beta Average: %f" % lfp_beta_average_value)
@@ -521,32 +526,32 @@ if __name__ == "__main__":
     #                         "/Thalamic_Pop/Thalamic_Soma_v.mat",
     #                         'soma(0.5).v', clear=True)
 
-    # TODO: only master MPI task should write these, not sure if a reduce is required first though...
     # Write controller values to csv files
     controller_measured_beta_values = np.asarray(controller.get_state_history())
     controller_measured_error_values = np.asarray(controller.get_error_history())
     controller_output_values = np.asarray(controller.get_output_history())
     controller_sample_times = np.asarray(controller.get_sample_times())
-    np.savetxt(
-        simulation_output_dir + "/controller_beta_values.csv",
-        controller_measured_beta_values,
-        delimiter=",",
-    )
-    np.savetxt(
-        simulation_output_dir + "/controller_error_values.csv",
-        controller_measured_error_values,
-        delimiter=",",
-    )
-    np.savetxt(
-        simulation_output_dir + "/controller_amplitude_values.csv",
-        controller_output_values,
-        delimiter=",",
-    )
-    np.savetxt(
-        simulation_output_dir + "/controller_sample_times.csv",
-        controller_sample_times,
-        delimiter=",",
-    )
+    if rank == 0:
+        np.savetxt(
+            simulation_output_dir + "/controller_beta_values.csv",
+            controller_measured_beta_values,
+            delimiter=",",
+        )
+        np.savetxt(
+            simulation_output_dir + "/controller_error_values.csv",
+            controller_measured_error_values,
+            delimiter=",",
+        )
+        np.savetxt(
+            simulation_output_dir + "/controller_amplitude_values.csv",
+            controller_output_values,
+            delimiter=",",
+        )
+        np.savetxt(
+            simulation_output_dir + "/controller_sample_times.csv",
+            controller_sample_times,
+            delimiter=",",
+        )
 
     # Write the STN LFP to .mat file
     STN_LFP_Block = neo.Block(name="STN_LFP")
