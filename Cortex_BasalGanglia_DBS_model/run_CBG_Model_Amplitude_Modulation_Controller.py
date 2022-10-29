@@ -25,6 +25,7 @@ import numpy as np
 import math
 import datetime
 import sys
+import argparse
 from utils import make_beta_cheby1_filter, calculate_avg_beta_power
 from model import load_network, electrode_distance
 
@@ -45,22 +46,27 @@ if __name__ == "__main__":
     # TODO: Fix the steady_state restore error when
     # simulation_runtime < steady_state_duration - 1
     # Duration of simulation from steady state
-    if len(sys.argv) < 2:
-        simulation_runtime = 32000.0
-    else:
-        simulation_runtime = float(sys.argv[1])
-    if len(sys.argv) >= 3:
-        controller_type = sys.argv[2]
-    else:
-        controller_type = "PID"
-        kp = 0.23
-        ti = 0.2
-        td = 0
 
-    if controller_type == "PID" and len(sys.argv) == 6:
-        kp = float(sys.argv[3])
-        ti = float(sys.argv[4])
-        td = float(sys.argv[5])
+    parser = argparse.ArgumentParser(prog=__file__, description="CBG Model with amplitude modulation")
+    parser.add_argument('-t','--time', default=32000.0, help='simulation runtime')
+    parser.add_argument('-c','--controller',default='PID',choices=['PID','zero'],help='Controller')
+    parser.add_argument('--kp',default=0.23)
+    parser.add_argument('--ti',default=0.2)
+    parser.add_argument('--td',default=0)
+
+    # Necessary to manually remove nrniv and __file__ when script is called via nrniv
+    args = sys.argv
+    for item in args:
+        if __file__ in item or 'nrniv' in item:
+            args.remove(item)
+
+    args, unknown = parser.parse_known_args(args)
+
+    simulation_runtime = float(args.time)
+    controller_type = args.controller
+    kp = float(args.kp)
+    ti = float(args.ti)
+    td = float(args.td)
 
     sim_total_time = (
         steady_state_duration + simulation_runtime + timestep
