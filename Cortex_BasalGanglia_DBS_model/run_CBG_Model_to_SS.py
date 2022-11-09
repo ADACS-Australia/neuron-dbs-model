@@ -15,6 +15,12 @@ Description: Cortico-Basal Ganglia Network Model implemented in PyNN using the
 """
 
 import os
+
+# No GUI please
+opts = os.environ.get('NEURON_MODULE_OPTIONS', '')
+if not "nogui" in opts:
+    os.environ['NEURON_MODULE_OPTIONS'] = opts + " -nogui"
+
 from mpi4py import MPI
 import neuron
 from pyNN.neuron import setup, run_to_steady_state, end, simulator
