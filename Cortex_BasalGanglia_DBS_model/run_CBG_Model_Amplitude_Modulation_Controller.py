@@ -15,6 +15,7 @@ Description: Cortico-Basal Ganglia Network Model implemented in PyNN using the
 @author: John Fleming, john.fleming@ucdconnect.ie
 """
 import os
+from mpi4py import MPI
 import neuron
 from pyNN.neuron import setup, run_until, end, simulator
 from pyNN.parameters import Sequence
@@ -32,12 +33,8 @@ from model import load_network, electrode_distance
 # Import global variables for GPe DBS
 import Global_Variables as GV
 
-from mpi4py import MPI
-
-comm = MPI.COMM_WORLD
-
 h = neuron.h
-
+comm = MPI.COMM_WORLD
 
 if __name__ == "__main__":
     rng_seed = 3695

@@ -15,6 +15,7 @@ Description: Cortico-Basal Ganglia Network Model implemented in PyNN using the
 """
 
 import os
+from mpi4py import MPI
 import neuron
 from pyNN.neuron import setup, run_to_steady_state, end, simulator
 from pyNN.parameters import Sequence
@@ -28,12 +29,8 @@ import Global_Variables as GV
 from utils import make_beta_cheby1_filter
 from model import load_network, electrode_distance
 
-from mpi4py import MPI
-
-comm = MPI.COMM_WORLD
-
 h = neuron.h
-
+comm = MPI.COMM_WORLD
 
 if __name__ == "__main__":
 
