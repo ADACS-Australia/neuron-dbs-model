@@ -17,9 +17,9 @@ Description: Cortico-Basal Ganglia Network Model implemented in PyNN using the
 import os
 
 # No GUI please
-opts = os.environ.get('NEURON_MODULE_OPTIONS', '')
+opts = os.environ.get("NEURON_MODULE_OPTIONS", "")
 if not "nogui" in opts:
-    os.environ['NEURON_MODULE_OPTIONS'] = opts + " -nogui"
+    os.environ["NEURON_MODULE_OPTIONS"] = opts + " -nogui"
 
 from mpi4py import MPI
 import neuron
@@ -50,17 +50,21 @@ if __name__ == "__main__":
     # simulation_runtime < steady_state_duration - 1
     # Duration of simulation from steady state
 
-    parser = argparse.ArgumentParser(prog=__file__, description="CBG Model with amplitude modulation")
-    parser.add_argument('-t','--time', default=32000.0, help='simulation runtime')
-    parser.add_argument('-c','--controller',default='PID',choices=['PID','zero'],help='Controller')
-    parser.add_argument('--kp',default=0.23)
-    parser.add_argument('--ti',default=0.2)
-    parser.add_argument('--td',default=0)
+    parser = argparse.ArgumentParser(
+        prog=__file__, description="CBG Model with amplitude modulation"
+    )
+    parser.add_argument("-t", "--time", default=32000.0, help="simulation runtime")
+    parser.add_argument(
+        "-c", "--controller", default="PID", choices=["PID", "zero"], help="Controller"
+    )
+    parser.add_argument("--kp", default=0.23)
+    parser.add_argument("--ti", default=0.2)
+    parser.add_argument("--td", default=0)
 
     # Necessary to manually remove nrniv and __file__ when script is called via nrniv
     args = sys.argv
     for item in args:
-        if __file__ in item or 'nrniv' in item:
+        if __file__ in item or "nrniv" in item:
             args.remove(item)
 
     args, unknown = parser.parse_known_args(args)
@@ -125,7 +129,12 @@ if __name__ == "__main__":
         prj_ThalamicCortical,
         prj_CorticalThalamic,
         GPe_stimulation_order,
-    ) = load_network(steady_state_duration, sim_total_time, simulation_runtime, v_init)
+    ) = load_network(
+        steady_state_duration,
+        sim_total_time,
+        simulation_runtime,
+        v_init,
+    )
 
     # Define state variables to record from each population
     Cortical_Pop.record("soma(0.5).v", sampling_interval=rec_sampling_interval)
