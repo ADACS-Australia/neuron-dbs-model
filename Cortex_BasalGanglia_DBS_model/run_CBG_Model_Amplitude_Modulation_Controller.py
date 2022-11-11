@@ -420,8 +420,10 @@ if __name__ == "__main__":
             * 1e-6
         )
         STN_LFP_GABAa = np.hstack(
-            STN_LFP_GABAa,
-            comm.allreduce(STN_LFP_GABAa_1 - STN_LFP_GABAa_2, op=MPI.SUM),
+            (
+                STN_LFP_GABAa,
+                comm.allreduce(STN_LFP_GABAa_1 - STN_LFP_GABAa_2, op=MPI.SUM),
+            )
         )
 
         # Biomarker Calculation:
