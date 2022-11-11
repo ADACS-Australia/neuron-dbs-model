@@ -17,7 +17,7 @@ Description: Cortico-Basal Ganglia Network Model implemented in PyNN using the
 import neuron
 from pyNN.neuron import setup, run_until, end, simulator
 from pyNN.parameters import Sequence
-from Controllers import StandardPIDController, ZeroController
+from Controllers import IterativeFeedbackTuningPIController
 import neo.io
 import quantities as pq
 import numpy as np
@@ -41,25 +41,17 @@ if __name__ == "__main__":
     # simulation_runtime < steady_state_duration - 1
     # Duration of simulation from steady state
     if len(sys.argv) < 2:
-        simulation_runtime = 32000.0
+        simulation_runtime = 8000.0
     else:
         simulation_runtime = float(sys.argv[1])
-    if len(sys.argv) >= 3:
-        controller_type = sys.argv[2]
+    if len(sys.argv) < 3:
+        experiment_time = 2
     else:
-        controller_type = "PID"
-        kp = 0.23
-        ti = 0.2
-        td = 0
-
-    if controller_type == "PID" and len(sys.argv) == 6:
-        kp = float(sys.argv[3])
-        ti = float(sys.argv[4])
-        td = float(sys.argv[5])
+        experiment_time = float(sys.argv[2])
     print(
-        "INFO: Running simulation for %.0f ms after steady state (%.0f ms) \
-with %s control"
-        % (simulation_runtime, steady_state_duration, controller_type)
+        "INFO: Running simulation for %.0f ms after steady state "
+        "(%.0f ms) with IFT control (experiment time %.2f s)"
+        % (simulation_runtime, steady_state_duration, experiment_time)
     )
     sim_total_time = (
         steady_state_duration + simulation_runtime + timestep
@@ -190,20 +182,17 @@ with %s control"
     # Initialize the Controller being used:
     # Controller sampling period, Ts, is in sec
     start_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    if controller_type == "zero":
-        controller = ZeroController(setpoint=0, Ts=0)
-    else:
-        controller = StandardPIDController(
-            SetPoint=1.0414e-04,
-            Kp=kp,
-            Ti=ti,
-            Td=td,
-            Ts=0.02,
-            MinValue=0.0,
-            MaxValue=3.0,
-        )
-    output_prefix = "Simulation_Output_Results/Controller_Simulations/Amp/"
-    simulation_identifier = controller.get_label() + "-" + start_timestamp
+    controller = IterativeFeedbackTuningPIController(
+        stage_length=experiment_time,
+        setpoint=1.0414e-04,
+        kp_init=0.4,
+        ti_init=0.2,
+        ts=0.02,
+        min_value=0.0,
+        max_value=3.0,
+    )
+    output_prefix = "Simulation_Output_Results/Controller_Simulations/IFT/"
+    simulation_identifier = controller.label + "-" + start_timestamp
     simulation_output_dir = output_prefix + simulation_identifier
 
     # Generate a square wave which represents the DBS signal
@@ -315,7 +304,7 @@ with %s control"
         # Integrate model to controller_call_time
         run_until(call_time - simulator.state.dt)
 
-        print(("Controller Called at t: %f" % simulator.state.t))
+        print(("Controller Called at t: %.2f" % simulator.state.t))
 
         # Calculate the LFP and biomarkers, etc.
         STN_AMPA_i = np.array(STN_Pop.get_data("AMPA.i").segments[0].analogsignals[0])
@@ -409,7 +398,6 @@ with %s control"
         DBS_amp = controller.update(
             state_value=lfp_beta_average_value, current_time=simulator.state.t
         )
-
         # Update the DBS Signal
         if call_index + 1 < len(controller_call_times):
 
@@ -501,10 +489,15 @@ with %s control"
     #                         'soma(0.5).v', clear=True)
 
     # Write controller values to csv files
-    controller_measured_beta_values = np.asarray(controller.get_state_history())
-    controller_measured_error_values = np.asarray(controller.get_error_history())
-    controller_output_values = np.asarray(controller.get_output_history())
-    controller_sample_times = np.asarray(controller.get_sample_times())
+    controller_measured_beta_values = np.asarray(controller.state_history)
+    controller_measured_error_values = np.asarray(controller.error_history)
+    controller_output_values = np.asarray(controller.output_history)
+    controller_sample_times = np.asarray(controller.sample_times)
+    controller_reference_history = np.asarray(controller.reference_history)
+    controller_iteration_history = np.asarray(controller.iteration_history)
+    controller_parameter_history = np.asarray(controller.parameter_history)
+    controller_integral_term_history = np.asarray(controller.integral_term_history)
+
     np.savetxt(
         simulation_output_dir + "/controller_beta_values.csv",
         controller_measured_beta_values,
@@ -523,6 +516,26 @@ with %s control"
     np.savetxt(
         simulation_output_dir + "/controller_sample_times.csv",
         controller_sample_times,
+        delimiter=",",
+    )
+    np.savetxt(
+        simulation_output_dir + "/controller_iteration_values.csv",
+        controller_iteration_history,
+        delimiter=",",
+    )
+    np.savetxt(
+        simulation_output_dir + "/controller_reference_values.csv",
+        controller_reference_history,
+        delimiter=",",
+    )
+    np.savetxt(
+        simulation_output_dir + "/controller_parameter_values.csv",
+        controller_parameter_history,
+        delimiter=",",
+    )
+    np.savetxt(
+        simulation_output_dir + "/controller_integral_term_values.csv",
+        controller_integral_term_history,
         delimiter=",",
     )
 
