@@ -359,10 +359,8 @@ if __name__ == "__main__":
         STN_LFP_1 = (
             (1 / (4 * math.pi * sigma))
             * np.sum(
-                (
-                    (1 / (STN_recording_electrode_1_distances * 1e-6))
-                    * STN_Syn_i.transpose()
-                ),
+                (1 / (STN_recording_electrode_1_distances * 1e-6))
+                * STN_Syn_i.transpose(),
                 axis=0,
             )
             * 1e-6
@@ -370,10 +368,8 @@ if __name__ == "__main__":
         STN_LFP_2 = (
             (1 / (4 * math.pi * sigma))
             * np.sum(
-                (
-                    (1 / (STN_recording_electrode_2_distances * 1e-6))
-                    * STN_Syn_i.transpose()
-                ),
+                (1 / (STN_recording_electrode_2_distances * 1e-6))
+                * STN_Syn_i.transpose(),
                 axis=0,
             )
             * 1e-6
@@ -386,10 +382,8 @@ if __name__ == "__main__":
         STN_LFP_AMPA_1 = (
             (1 / (4 * math.pi * sigma))
             * np.sum(
-                (
-                    (1 / (STN_recording_electrode_1_distances * 1e-6))
-                    * STN_AMPA_i.transpose()
-                ),
+                (1 / (STN_recording_electrode_1_distances * 1e-6))
+                * STN_AMPA_i.transpose(),
                 axis=0,
             )
             * 1e-6
@@ -397,10 +391,8 @@ if __name__ == "__main__":
         STN_LFP_AMPA_2 = (
             (1 / (4 * math.pi * sigma))
             * np.sum(
-                (
-                    (1 / (STN_recording_electrode_2_distances * 1e-6))
-                    * STN_AMPA_i.transpose()
-                ),
+                (1 / (STN_recording_electrode_2_distances * 1e-6))
+                * STN_AMPA_i.transpose(),
                 axis=0,
             )
             * 1e-6
@@ -412,10 +404,8 @@ if __name__ == "__main__":
         STN_LFP_GABAa_1 = (
             (1 / (4 * math.pi * sigma))
             * np.sum(
-                (
-                    (1 / (STN_recording_electrode_1_distances * 1e-6))
-                    * STN_GABAa_i.transpose()
-                ),
+                (1 / (STN_recording_electrode_1_distances * 1e-6))
+                * STN_GABAa_i.transpose(),
                 axis=0,
             )
             * 1e-6
@@ -423,19 +413,15 @@ if __name__ == "__main__":
         STN_LFP_GABAa_2 = (
             (1 / (4 * math.pi * sigma))
             * np.sum(
-                (
-                    (1 / (STN_recording_electrode_2_distances * 1e-6))
-                    * STN_GABAa_i.transpose()
-                ),
+                (1 / (STN_recording_electrode_2_distances * 1e-6))
+                * STN_GABAa_i.transpose(),
                 axis=0,
             )
             * 1e-6
         )
         STN_LFP_GABAa = np.hstack(
-            (
-                STN_LFP_GABAa,
-                comm.allreduce(STN_LFP_GABAa_1 - STN_LFP_GABAa_2, op=MPI.SUM),
-            )
+            STN_LFP_GABAa,
+            comm.allreduce(STN_LFP_GABAa_1 - STN_LFP_GABAa_2, op=MPI.SUM),
         )
 
         # Biomarker Calculation:

@@ -17,9 +17,9 @@ Description: Cortico-Basal Ganglia Network Model implemented in PyNN using the
 import os
 
 # No GUI please
-opts = os.environ.get('NEURON_MODULE_OPTIONS', '')
+opts = os.environ.get("NEURON_MODULE_OPTIONS", "")
 if not "nogui" in opts:
-    os.environ['NEURON_MODULE_OPTIONS'] = opts + " -nogui"
+    os.environ["NEURON_MODULE_OPTIONS"] = opts + " -nogui"
 
 from mpi4py import MPI
 import neuron
@@ -39,7 +39,6 @@ h = neuron.h
 comm = MPI.COMM_WORLD
 
 if __name__ == "__main__":
-
     rng_seed = 3695
     timestep = 0.01
     save_sim_data = False
@@ -53,7 +52,7 @@ if __name__ == "__main__":
 
     # Make beta band filter centred on 25Hz (cutoff frequencies are 21-29 Hz)
     # for biomarker estimation
-    fs = 1000 / rec_sampling_interval
+    fs = 1000.0 / rec_sampling_interval
     beta_b, beta_a = make_beta_cheby1_filter(fs=fs, n=4, rp=0.5, low=21, high=29)
 
     # Use CVode to calculate i_membrane_ for fast LFP calculation
@@ -65,7 +64,8 @@ if __name__ == "__main__":
 
     # Set initial values for cell membrane voltages
     v_init = -68
-
+    if rank == 0:
+        print("Loading network...")
     (
         Pop_size,
         striatal_spike_times,
@@ -150,11 +150,6 @@ if __name__ == "__main__":
     for ii, cell in enumerate(Cortical_Pop):
         cell.collateral_rx = collateral_rx_seq[ii]
 
-    # Initialise STN LFP list
-    STN_LFP = []
-    STN_LFP_AMPA = []
-    STN_LFP_GABAa = []
-
     # Variables for writing simulation data
     last_write_time = 0
 
@@ -180,6 +175,11 @@ if __name__ == "__main__":
             GV.GPe_stimulation_iclamps[i]._ref_amp, GPe_DBS_times_neuron[i], 1
         )
 
+    # Initialise STN LFP list
+    STN_LFP = []
+    STN_LFP_AMPA = []
+    STN_LFP_GABAa = []
+
     # Run the model to the steady state
     if rank == 0:
         print("Running model to steady state...")
@@ -199,35 +199,61 @@ if __name__ == "__main__":
     STN_Syn_i = STN_AMPA_i + STN_GABAa_i
 
     # STN LFP Calculation - Syn_i is in units of nA -> LFP units are mV
-    STN_LFP_1 = (1e-6 / (4 * math.pi * sigma)) * np.sum(
-        (1 / (STN_recording_electrode_1_distances * 1e-6)) * STN_Syn_i.transpose(),
-        axis=0,
+    STN_LFP_1 = (
+        (1 / (4 * math.pi * sigma))
+        * np.sum(
+            (1 / (STN_recording_electrode_1_distances * 1e-6)) * STN_Syn_i.transpose(),
+            axis=0,
+        )
+        * 1e-6
     )
-    STN_LFP_2 = (1e-6 / (4 * math.pi * sigma)) * np.sum(
-        (1 / (STN_recording_electrode_2_distances * 1e-6)) * STN_Syn_i.transpose(),
-        axis=0,
+    STN_LFP_2 = (
+        (1 / (4 * math.pi * sigma))
+        * np.sum(
+            (1 / (STN_recording_electrode_2_distances * 1e-6)) * STN_Syn_i.transpose(),
+            axis=0,
+        )
+        * 1e-6
     )
     STN_LFP = STN_LFP_1 - STN_LFP_2
     STN_LFP = comm.allreduce(STN_LFP, op=MPI.SUM)
 
     # STN LFP AMPA and GABAa Contributions
-    STN_LFP_AMPA_1 = (1e-6 / (4 * math.pi * sigma)) * np.sum(
-        (1 / (STN_recording_electrode_1_distances * 1e-6)) * STN_AMPA_i.transpose(),
-        axis=0,
+    STN_LFP_AMPA_1 = (
+        (1 / (4 * math.pi * sigma))
+        * np.sum(
+            (1 / (STN_recording_electrode_1_distances * 1e-6)) * STN_AMPA_i.transpose(),
+            axis=0,
+        )
+        * 1e-6
     )
-    STN_LFP_AMPA_2 = (1e-6 / (4 * math.pi * sigma)) * np.sum(
-        (1 / (STN_recording_electrode_2_distances * 1e-6)) * STN_AMPA_i.transpose(),
-        axis=0,
+    STN_LFP_AMPA_2 = (
+        (1 / (4 * math.pi * sigma))
+        * np.sum(
+            (1 / (STN_recording_electrode_2_distances * 1e-6)) * STN_AMPA_i.transpose(),
+            axis=0,
+        )
+        * 1e-6
     )
     STN_LFP_AMPA = STN_LFP_AMPA_1 - STN_LFP_AMPA_2
     STN_LFP_AMPA = comm.allreduce(STN_LFP_AMPA, op=MPI.SUM)
-    STN_LFP_GABAa_1 = (1e-6 / (4 * math.pi * sigma)) * np.sum(
-        (1 / (STN_recording_electrode_1_distances * 1e-6)) * STN_GABAa_i.transpose(),
-        axis=0,
+    STN_LFP_GABAa_1 = (
+        (1 / (4 * math.pi * sigma))
+        * np.sum(
+            (1 / (STN_recording_electrode_1_distances * 1e-6))
+            * STN_GABAa_i.transpose(),
+            axis=0,
+        )
+        * 1e-6
     )
-    STN_LFP_GABAa_2 = (1e-6 / (4 * math.pi * sigma)) * np.sum(
-        (1 / (STN_recording_electrode_2_distances * 1e-6)) * STN_GABAa_i.transpose(),
-        axis=0,
+    STN_LFP_GABAa_2 = (
+        (1 / (4 * math.pi * sigma))
+        * np.sum(
+            (1 / (STN_recording_electrode_2_distances * 1e-6))
+            * STN_GABAa_i.transpose(),
+            axis=0,
+        )
+        * 1e-6
     )
     STN_LFP_GABAa = STN_LFP_GABAa_1 - STN_LFP_GABAa_2
     STN_LFP_GABAa = comm.allreduce(STN_LFP_GABAa, op=MPI.SUM)
