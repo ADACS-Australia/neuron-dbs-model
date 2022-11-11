@@ -498,9 +498,10 @@ if __name__ == "__main__":
 
                 # Stimulate the entrained GPe neurons
                 for i in np.arange(0, num_GPe_Neurons_entrained):
-                    updated_GPe_DBS_signal[GPe_stimulation_order[i]][
-                        window_start_index:window_end_index
-                    ] = GPe_DBS_Segment
+                    cellid = Cortical_Pop(GPe_stimulation_order[i])
+                    if Cortical_Pop.is_local(cellid):
+                        index = Cortical_Pop.id_to_local_index(cellid)
+                        updated_GPe_DBS_signal[index][window_start_index:window_end_index] = GPe_DBS_Segment
 
             else:
                 pass
