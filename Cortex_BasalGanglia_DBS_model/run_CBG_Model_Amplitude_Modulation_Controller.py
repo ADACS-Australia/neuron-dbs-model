@@ -212,6 +212,9 @@ if __name__ == "__main__":
         controller_start, sim_total_time, controller_sampling_time
     )
 
+    if len(controller_call_times) == 0:
+        controller_call_times = np.array([controller_start])
+
     # Initialize the Controller being used:
     # Controller sampling period, Ts, is in sec
     start_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
@@ -252,7 +255,9 @@ if __name__ == "__main__":
     # Get DBS time indexes which corresponds to controller call times
     controller_DBS_indexs = []
     for call_time in controller_call_times:
-        controller_DBS_indexs.extend([np.where(DBS_times == call_time)[0][0]])
+        indices = np.where(DBS_times == call_time)[0]
+        if len(indices) > 0:
+            controller_DBS_indexs.extend([indices[0]])
 
     # Set first portion of DBS signal (Up to first controller call after
     # steady state) to zero amplitude
@@ -467,9 +472,11 @@ if __name__ == "__main__":
 
                 # Update DBS segment - replace original DBS array values with
                 # updated ones
-                window_start_index = np.where(DBS_times == new_DBS_times_Segment[0])[0][
-                    0
-                ]
+                indices = np.where(DBS_times == new_DBS_times_Segment[0])[0]
+                if len(indices) > 0:
+                    window_start_index = indices[0]
+                else:
+                    window_start_index = 0
                 new_window_sample_length = len(new_DBS_Signal_Segment)
                 window_end_index = window_start_index + new_window_sample_length
                 updated_DBS_signal[
