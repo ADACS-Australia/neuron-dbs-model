@@ -278,7 +278,7 @@ class _State(common.control.BaseState):
             h.stdinit()
 
             ns = h.SaveState()
-            sf = h.File('steady_state.bin')
+            sf = h.File(f'steady_state_{self.mpi_rank}.bin')
             ns.fread(sf)
             #print("Time before restore = %g ms" % h.t)
             ns.restore(0)
@@ -303,7 +303,7 @@ class _State(common.control.BaseState):
 
         # Save the model state and write it to file
         svstate.save()
-        f = h.File("steady_state.bin")
+        f = h.File(f'steady_state_{self.mpi_rank}.bin')
         svstate.fwrite(f)
         #print("Steady State written to file!")
 
@@ -316,7 +316,7 @@ class _State(common.control.BaseState):
         h.stdinit()
 
         ns = h.SaveState()
-        sf = h.File('steady_state.bin')
+        sf = h.File(f'steady_state_{self.mpi_rank}.bin')
         ns.fread(sf)
         #print("Time before restore = %g ms" % h.t)
         ns.restore(0)
