@@ -233,7 +233,7 @@ if __name__ == "__main__":
 
     output_dirname = os.environ.get("PYNN_OUTPUT_DIRNAME", "Simulation_Output_Results")
     output_prefix = f"{output_dirname}/Controller_Simulations/Amp/"
-    simulation_identifier = controller.get_label() + "-" + start_timestamp
+    simulation_identifier = controller.label + "-" + start_timestamp
     simulation_output_dir = output_prefix + simulation_identifier
 
     # Generate a square wave which represents the DBS signal
@@ -349,7 +349,7 @@ if __name__ == "__main__":
         run_until(call_time - simulator.state.dt)
 
         if rank == 0:
-            print("Controller Called at t: %f" % simulator.state.t)
+            print("Controller Called at t: %.2f" % simulator.state.t)
 
         # Calculate the LFP and biomarkers, etc.
         STN_AMPA_i = np.array(
@@ -501,7 +501,9 @@ if __name__ == "__main__":
                     cellid = Cortical_Pop[GPe_stimulation_order[i]]
                     if Cortical_Pop.is_local(cellid):
                         index = Cortical_Pop.id_to_local_index(cellid)
-                        updated_GPe_DBS_signal[index][window_start_index:window_end_index] = GPe_DBS_Segment
+                        updated_GPe_DBS_signal[index][
+                            window_start_index:window_end_index
+                        ] = GPe_DBS_Segment
 
             else:
                 pass
@@ -541,10 +543,10 @@ if __name__ == "__main__":
     #                         'soma(0.5).v', clear=True)
 
     # Write controller values to csv files
-    controller_measured_beta_values = np.asarray(controller.get_state_history())
-    controller_measured_error_values = np.asarray(controller.get_error_history())
-    controller_output_values = np.asarray(controller.get_output_history())
-    controller_sample_times = np.asarray(controller.get_sample_times())
+    controller_measured_beta_values = np.asarray(controller.state_history)
+    controller_measured_error_values = np.asarray(controller.error_history)
+    controller_output_values = np.asarray(controller.output_history)
+    controller_sample_times = np.asarray(controller.sample_times)
     if rank == 0:
         np.savetxt(
             simulation_output_dir + "/controller_beta_values.csv",
