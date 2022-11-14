@@ -23,13 +23,12 @@ from mpi4py import MPI
 import neuron
 from pyNN.neuron import setup, run_until, end, simulator
 from pyNN.parameters import Sequence
-from Controllers import StandardPIDController, ZeroController
+from Controllers import StandardPIDController, ZeroController, StandardPIDController
 import neo.io
 import quantities as pq
 import numpy as np
 import math
 import datetime
-import sys
 import argparse
 from utils import make_beta_cheby1_filter, calculate_avg_beta_power
 from model import load_network, electrode_distance
@@ -66,7 +65,7 @@ if __name__ == "__main__":
     if rank == 0:
         print(
             "\nINFO: Running simulation for %.0f ms after steady state (%.0f ms) with %s control"
-            % (simulation_runtime, steady_state_duration, controller_type)
+            % (simulation_runtime, steady_state_duration, controller_type.upper())
         )
 
     # Make beta band filter centred on 25Hz (cutoff frequencies are 21-29 Hz)
@@ -205,7 +204,7 @@ if __name__ == "__main__":
         controller = StandardPIDController(**controller_kwargs)
     start_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     output_dirname = os.environ.get("PYNN_OUTPUT_DIRNAME", "Simulation_Output_Results")
-    output_prefix = f"{output_dirname}/Controller_Simulations/Amp/"
+    output_prefix = f"{output_dirname}/Controller_Simulation/"
 
     simulation_identifier = controller.label + "-" + start_timestamp
     simulation_output_dir = output_prefix + simulation_identifier
@@ -213,6 +212,10 @@ if __name__ == "__main__":
     # Generate a square wave which represents the DBS signal
     # Needs to be initialized to zero when unused to prevent
     # open-circuit of cortical collateral extracellular mechanism
+    if c.Modulation == 'frequency':
+        last_pulse_time_prior = steady_state_duration
+    else:
+        last_pulse_time_prior = 0
     (
         DBS_Signal,
         DBS_times,
@@ -221,7 +224,7 @@ if __name__ == "__main__":
     ) = controller.generate_dbs_signal(
         start_time=steady_state_duration + 10 + simulator.state.dt,
         stop_time=sim_total_time,
-        last_pulse_time_prior=0,
+        last_pulse_time_prior=last_pulse_time_prior,
         dt=simulator.state.dt,
         amplitude=-1.0,
         frequency=130.0,
@@ -253,6 +256,10 @@ if __name__ == "__main__":
     # Get DBS_Signal_neuron as a numpy array for easy updating
     updated_DBS_signal = DBS_Signal_neuron.as_numpy()
 
+    # Initialize tracking the frequencies calculated by the controller
+    last_freq_calculated = 0
+    last_DBS_pulse_time = steady_state_duration
+
     # GPe DBS current stimulations - precalculated for % of collaterals
     # entrained for varying DBS amplitude
     interp_DBS_amplitudes = np.array(
@@ -261,6 +268,11 @@ if __name__ == "__main__":
     interp_collaterals_entrained = np.array(
         [0, 0, 0, 1, 4, 8, 19, 30, 43, 59, 82, 100, 100, 100]
     )
+
+    if c.Modulation == 'frequency':
+        last_pulse_time_prior = steady_state_duration
+    else:
+        last_pulse_time_prior = 0
 
     # Make new GPe DBS vector for each GPe neuron - each GPe neuron needs a
     # pointer to its own DBS signal
@@ -276,7 +288,7 @@ if __name__ == "__main__":
         ) = controller.generate_dbs_signal(
             start_time=steady_state_duration + 10 + simulator.state.dt,
             stop_time=sim_total_time,
-            last_pulse_time_prior=0,
+            last_pulse_time_prior=last_pulse_time_prior,
             dt=simulator.state.dt,
             amplitude=100.0,
             frequency=130.0,
@@ -423,14 +435,37 @@ if __name__ == "__main__":
         if rank == 0:
             print("Beta Average: %f" % lfp_beta_average_value)
 
-        # Calculate the updated DBS amplitude
-        DBS_amp = controller.update(
-            state_value=lfp_beta_average_value, current_time=simulator.state.t
-        )
-        DBS_freq = 130.0
+        if c.Modulation == 'frequency':
+            # Calculate the updated DBS Frequency
+            DBS_amp = 1.5
+            DBS_freq = controller.update(
+                state_value=lfp_beta_average_value, current_time=simulator.state.t
+            )
+        else:
+            # Calculate the updated DBS amplitude
+            DBS_amp = controller.update(
+                state_value=lfp_beta_average_value, current_time=simulator.state.t
+            )
+            DBS_freq = 130.0
 
         # Update the DBS Signal
         if call_index + 1 < len(controller_call_times):
+
+            if c.Modulation == 'frequency':
+                last_pulse_time_prior = last_DBS_pulse_time
+                # Check if the frequency needs to change before the last time that was calculated
+                if DBS_freq != last_freq_calculated:
+                    if DBS_freq == 0.0:  # Check if DBS wants to turn off
+                        next_DBS_pulse_time = 1e9
+                    else:  # Calculate new next pulse time if DBS is on
+                        T = (1.0 / DBS_freq) * 1e3
+                        next_DBS_pulse_time = last_DBS_pulse_time + T - 0.06
+
+                        # Need to check for situation when new DBS time is less than the current time
+                        if next_DBS_pulse_time <= simulator.state.t:
+                            next_DBS_pulse_time = simulator.state.t
+            else:
+                last_pulse_time_prior = 0
 
         # Calculate new DBS segment from the next DBS pulse time
             if next_DBS_pulse_time < controller_call_times[call_index + 1]:
@@ -446,7 +481,7 @@ if __name__ == "__main__":
                 ) = controller.generate_dbs_signal(
                     start_time=next_DBS_pulse_time,
                     stop_time=controller_call_times[call_index + 1],
-                    last_pulse_time_prior=0,
+                    last_pulse_time_prior=last_pulse_time_prior,
                     dt=simulator.state.dt,
                     amplitude=-DBS_amp,
                     frequency=DBS_freq,
@@ -488,6 +523,9 @@ if __name__ == "__main__":
                         updated_GPe_DBS_signal[index][
                             window_start_index:window_end_index
                         ] = GPe_DBS_Segment
+
+                # Remember the last frequency that was calculated
+                last_freq_calculated = DBS_freq
 
             else:
                 pass
@@ -538,7 +576,7 @@ if __name__ == "__main__":
             delimiter=",",
         )
         np.savetxt(
-            simulation_output_dir + "/controller_amplitude_values.csv",
+            simulation_output_dir + "/controller_values.csv",
             controller_output_values,
             delimiter=",",
         )
