@@ -77,9 +77,8 @@ if __name__ == "__main__":
 
     if rank == 0:
         print(
-            "INFO: Running simulation for %.0f ms after steady state "
-            "(%.0f ms) with IFT control (experiment time %.2f s)"
-            % (simulation_runtime, steady_state_duration, experiment_time)
+            "\nINFO: Running simulation for %.0f ms after steady state (%.0f ms) with %s control (experiment time %.2f s)"
+            % (simulation_runtime, steady_state_duration, "IFT", experiment_time)
         )
 
     # Make beta band filter centred on 25Hz (cutoff frequencies are 21-29 Hz)
@@ -205,9 +204,11 @@ if __name__ == "__main__":
         controller_start, sim_total_time, controller_sampling_time
     )
 
+    if len(controller_call_times) == 0:
+        controller_call_times = np.array([controller_start])
+
     # Initialize the Controller being used:
     # Controller sampling period, Ts, is in sec
-    start_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     controller = IterativeFeedbackTuningPIController(
         stage_length=experiment_time,
         setpoint=1.0414e-04,
@@ -217,18 +218,25 @@ if __name__ == "__main__":
         min_value=0.0,
         max_value=3.0,
     )
-
+    start_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     output_dirname = os.environ.get("PYNN_OUTPUT_DIRNAME", "Simulation_Output_Results")
     output_prefix = f"{output_dirname}/Controller_Simulations/IFT/"
+
     simulation_identifier = controller.label + "-" + start_timestamp
     simulation_output_dir = output_prefix + simulation_identifier
 
     # Generate a square wave which represents the DBS signal
     # Needs to be initialized to zero when unused to prevent
     # open-circuit of cortical collateral extracellular mechanism
-    (DBS_Signal, DBS_times, next_DBS_pulse_time, _,) = controller.generate_dbs_signal(
+    (
+        DBS_Signal,
+        DBS_times,
+        next_DBS_pulse_time,
+        last_DBS_pulse_time,
+    ) = controller.generate_dbs_signal(
         start_time=steady_state_duration + 10 + simulator.state.dt,
         stop_time=sim_total_time,
+        last_pulse_time_prior=0,
         dt=simulator.state.dt,
         amplitude=-1.0,
         frequency=130.0,
@@ -279,10 +287,11 @@ if __name__ == "__main__":
             GPe_DBS_Signal,
             GPe_DBS_times,
             GPe_next_DBS_pulse_time,
-            _,
+            GPe_last_DBS_pulse_time,
         ) = controller.generate_dbs_signal(
             start_time=steady_state_duration + 10 + simulator.state.dt,
             stop_time=sim_total_time,
+            last_pulse_time_prior=0,
             dt=simulator.state.dt,
             amplitude=100.0,
             frequency=130.0,
@@ -436,7 +445,8 @@ if __name__ == "__main__":
 
         # Update the DBS Signal
         if call_index + 1 < len(controller_call_times):
-
+            DBS_freq = 130.0
+            # Calculate new DBS segment from the next DBS pulse time
             if next_DBS_pulse_time < controller_call_times[call_index + 1]:
 
                 GPe_next_DBS_pulse_time = next_DBS_pulse_time
@@ -446,13 +456,14 @@ if __name__ == "__main__":
                     new_DBS_Signal_Segment,
                     new_DBS_times_Segment,
                     next_DBS_pulse_time,
-                    _,
+                    last_DBS_pulse_time,
                 ) = controller.generate_dbs_signal(
                     start_time=next_DBS_pulse_time,
                     stop_time=controller_call_times[call_index + 1],
+                    last_pulse_time_prior=0,
                     dt=simulator.state.dt,
                     amplitude=-DBS_amp,
-                    frequency=130.0,
+                    frequency=DBS_freq,
                     pulse_width=0.06,
                     offset=0,
                 )

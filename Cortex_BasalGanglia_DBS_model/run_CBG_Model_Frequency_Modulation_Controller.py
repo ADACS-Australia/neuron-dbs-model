@@ -48,12 +48,18 @@ if __name__ == "__main__":
     # Duration of simulation from steady state
     simulation_runtime = 32000.0
     sim_total_time = (
-        steady_state_duration + simulation_runtime + simulator.state.dt
+        steady_state_duration + simulation_runtime + timestep
     )  # Total simulation time
     rec_sampling_interval = 0.5  # Signals are sampled every 0.5 ms
 
     # Setup simulation
     rank = setup(timestep=timestep, rngseed=rng_seed)
+
+    if rank == 0:
+        print(
+            "\nINFO: Running simulation for %.0f ms after steady state (%.0f ms) with %s control"
+            % (simulation_runtime, steady_state_duration, "PID")
+        )
 
     # Make beta band filter centred on 25Hz (cutoff frequencies are 21-29 Hz)
     # for biomarker estimation
@@ -178,12 +184,11 @@ if __name__ == "__main__":
         controller_start, sim_total_time, controller_sampling_time
     )
 
+    if len(controller_call_times) == 0:
+        controller_call_times = np.array([controller_start])
+
     # Initialize the Controller being used:
     # Controller sampling period, Ts, is in sec
-    # # P Controller:
-    # controller = StandardPIDController(SetPoint=1.0414e-04, Kp=416.7, Ti=0.0, Td=0, Ts=0.02, MinValue=0.0,
-    #                                      MaxValue=250.0)
-    # PI Controller:
     controller = StandardPIDController(
         SetPoint=1.0414e-04,
         Kp=19.3,
@@ -255,8 +260,6 @@ if __name__ == "__main__":
     interp_collaterals_entrained = np.array(
         [0, 0, 0, 1, 4, 8, 19, 30, 43, 59, 82, 100, 100, 100]
     )
-    GPe_stimulation_order = np.loadtxt("GPe_Stimulation_Order.txt", delimiter=",")
-    GPe_stimulation_order = [int(index) for index in GPe_stimulation_order]
 
     # Make new GPe DBS vector for each GPe neuron - each GPe neuron needs a
     # pointer to its own DBS signal
@@ -267,7 +270,7 @@ if __name__ == "__main__":
         (
             GPe_DBS_Signal,
             GPe_DBS_times,
-            _,
+            GPe_next_DBS_pulse_time,
             GPe_last_DBS_pulse_time,
         ) = controller.generate_dbs_signal(
             start_time=steady_state_duration + 10 + simulator.state.dt,

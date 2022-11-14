@@ -232,15 +232,22 @@ if __name__ == "__main__":
     start_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     output_dirname = os.environ.get("PYNN_OUTPUT_DIRNAME", "Simulation_Output_Results")
     output_prefix = f"{output_dirname}/Controller_Simulations/Amp/"
+
     simulation_identifier = controller.label + "-" + start_timestamp
     simulation_output_dir = output_prefix + simulation_identifier
 
     # Generate a square wave which represents the DBS signal
     # Needs to be initialized to zero when unused to prevent
     # open-circuit of cortical collateral extracellular mechanism
-    (DBS_Signal, DBS_times, next_DBS_pulse_time, _,) = controller.generate_dbs_signal(
+    (
+        DBS_Signal,
+        DBS_times,
+        next_DBS_pulse_time,
+        last_DBS_pulse_time,
+    ) = controller.generate_dbs_signal(
         start_time=steady_state_duration + 10 + simulator.state.dt,
         stop_time=sim_total_time,
+        last_pulse_time_prior=0,
         dt=simulator.state.dt,
         amplitude=-1.0,
         frequency=130.0,
@@ -291,10 +298,11 @@ if __name__ == "__main__":
             GPe_DBS_Signal,
             GPe_DBS_times,
             GPe_next_DBS_pulse_time,
-            _,
+            GPe_last_DBS_pulse_time,
         ) = controller.generate_dbs_signal(
             start_time=steady_state_duration + 10 + simulator.state.dt,
             stop_time=sim_total_time,
+            last_pulse_time_prior=0,
             dt=simulator.state.dt,
             amplitude=100.0,
             frequency=130.0,
@@ -458,10 +466,11 @@ if __name__ == "__main__":
                     new_DBS_Signal_Segment,
                     new_DBS_times_Segment,
                     next_DBS_pulse_time,
-                    _,
+                    last_DBS_pulse_time,
                 ) = controller.generate_dbs_signal(
                     start_time=next_DBS_pulse_time,
                     stop_time=controller_call_times[call_index + 1],
+                    last_pulse_time_prior=0,
                     dt=simulator.state.dt,
                     amplitude=-DBS_amp,
                     frequency=130.0,
