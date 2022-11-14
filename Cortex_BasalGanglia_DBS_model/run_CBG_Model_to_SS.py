@@ -13,12 +13,11 @@ Description: Cortico-Basal Ganglia Network Model implemented in PyNN using the
 
 @author: John Fleming, john.fleming@ucdconnect.ie
 """
-
 import os
 
 # No GUI please
 opts = os.environ.get("NEURON_MODULE_OPTIONS", "")
-if not "nogui" in opts:
+if "nogui" not in opts:
     os.environ["NEURON_MODULE_OPTIONS"] = opts + " -nogui"
 
 from mpi4py import MPI
@@ -29,11 +28,12 @@ import numpy as np
 import math
 import neo
 import quantities as pq
+from utils import make_beta_cheby1_filter
+from model import load_network, electrode_distance
 
 # Import global variables for GPe DBS
 import Global_Variables as GV
-from utils import make_beta_cheby1_filter
-from model import load_network, electrode_distance
+
 
 h = neuron.h
 comm = MPI.COMM_WORLD
@@ -44,6 +44,7 @@ if __name__ == "__main__":
     save_sim_data = False
     # Setup simulation
     rank = setup(timestep=timestep, rngseed=rng_seed)
+
     if rank == 0:
         print("\nSetting up simulation...")
     steady_state_duration = 6000.0  # Duration of simulation steady state
@@ -64,6 +65,7 @@ if __name__ == "__main__":
 
     # Set initial values for cell membrane voltages
     v_init = -68
+
     if rank == 0:
         print("Loading network...")
     (
@@ -215,8 +217,7 @@ if __name__ == "__main__":
         )
         * 1e-6
     )
-    STN_LFP = STN_LFP_1 - STN_LFP_2
-    STN_LFP = comm.allreduce(STN_LFP, op=MPI.SUM)
+    STN_LFP = np.hstack((STN_LFP, comm.allreduce(STN_LFP_1 - STN_LFP_2, op=MPI.SUM)))
 
     # STN LFP AMPA and GABAa Contributions
     STN_LFP_AMPA_1 = (
@@ -235,8 +236,10 @@ if __name__ == "__main__":
         )
         * 1e-6
     )
-    STN_LFP_AMPA = STN_LFP_AMPA_1 - STN_LFP_AMPA_2
-    STN_LFP_AMPA = comm.allreduce(STN_LFP_AMPA, op=MPI.SUM)
+    STN_LFP_AMPA = np.hstack(
+        (STN_LFP_AMPA, comm.allreduce(STN_LFP_AMPA_1 - STN_LFP_AMPA_2, op=MPI.SUM))
+    )
+
     STN_LFP_GABAa_1 = (
         (1 / (4 * math.pi * sigma))
         * np.sum(
@@ -255,8 +258,12 @@ if __name__ == "__main__":
         )
         * 1e-6
     )
-    STN_LFP_GABAa = STN_LFP_GABAa_1 - STN_LFP_GABAa_2
-    STN_LFP_GABAa = comm.allreduce(STN_LFP_GABAa, op=MPI.SUM)
+    STN_LFP_GABAa = np.hstack(
+        (
+            STN_LFP_GABAa,
+            comm.allreduce(STN_LFP_GABAa_1 - STN_LFP_GABAa_2, op=MPI.SUM),
+        )
+    )
 
     # Simulation Label for writing model output data - uncomment to write the
     # specified variables to file
