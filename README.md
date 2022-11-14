@@ -43,12 +43,7 @@ You can change the output directory for results using the environment variable `
 ```shell
 $ cd Cortex_BasalGanglia_DBS_model/
 $ export PYNN_OUTPUT_DIRNAME="my_results_dir"
-$ mpirun -np 4 nrniv -nogui -python -mpi run_CBG_Model_to_SS.py
-```
-
-For convenience, you can also use the provided run script instead
-```shell
-$ PYNN_OUTPUT_DIRNAME="my_results_dir" ./run_ss.sh 4
+$ mpirun -n 4 python run_CBG_Model_to_SS.py
 ```
 
 # Plotting results
