@@ -3,3 +3,4 @@ NEURON>=8.2.1
 numpy>=1.22.3
 PyNN>=0.10.1
 scipy>=1.8.0
+argparse>=1.4.0

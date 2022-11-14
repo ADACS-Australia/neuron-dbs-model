@@ -352,7 +352,7 @@ def load_network(
 
     # Load striatal spike times from file
     striatal_spike_times = np.load("Striatal_Spike_Times.npy", allow_pickle=True)
-    Pop_size = len(striatal_spike_times[:,0])
+    Pop_size = len(striatal_spike_times[:, 0])
     for i in range(0, Pop_size):
         spike_times = striatal_spike_times[i][0].value
         spike_times = spike_times[spike_times > steady_state_duration]
@@ -460,7 +460,6 @@ def load_network(
         cell.position[0] = STN_Neuron_x_Positions[ii]
         cell.position[1] = STN_Neuron_y_Positions[ii]
         cell.position[2] = 500
-
 
     # Synaptic Connections
     # Add variability to Cortical connections - cortical interneuron

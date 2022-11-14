@@ -3,3 +3,8 @@
 x86_64
 *.mat
 *.pdf
+Simulation_Output_Results/
+*.qout
+*.q
+RESULTS_*/
+results_*/
