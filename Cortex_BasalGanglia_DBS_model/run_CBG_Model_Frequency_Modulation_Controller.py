@@ -535,6 +535,11 @@ if __name__ == "__main__":
     controller_measured_error_values = np.asarray(controller.error_history)
     controller_output_values = np.asarray(controller.output_history)
     controller_sample_times = np.asarray(controller.sample_times)
+    controller_reference_history = np.asarray(controller.reference_history)
+    controller_iteration_history = np.asarray(controller.iteration_history)
+    controller_parameter_history = np.asarray(controller.parameter_history)
+    controller_integral_term_history = np.asarray(controller.integral_term_history)
+
     if rank == 0:
         np.savetxt(
             simulation_output_dir + "/controller_beta_values.csv",
@@ -554,6 +559,26 @@ if __name__ == "__main__":
         np.savetxt(
             simulation_output_dir + "/controller_sample_times.csv",
             controller_sample_times,
+            delimiter=",",
+        )
+        np.savetxt(
+            simulation_output_dir + "/controller_iteration_values.csv",
+            controller_iteration_history,
+            delimiter=",",
+        )
+        np.savetxt(
+            simulation_output_dir + "/controller_reference_values.csv",
+            controller_reference_history,
+            delimiter=",",
+        )
+        np.savetxt(
+            simulation_output_dir + "/controller_parameter_values.csv",
+            controller_parameter_history,
+            delimiter=",",
+        )
+        np.savetxt(
+            simulation_output_dir + "/controller_integral_term_values.csv",
+            controller_integral_term_history,
             delimiter=",",
         )
 

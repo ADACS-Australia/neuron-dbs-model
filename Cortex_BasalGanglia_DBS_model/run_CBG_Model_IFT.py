@@ -442,10 +442,11 @@ if __name__ == "__main__":
         DBS_amp = controller.update(
             state_value=lfp_beta_average_value, current_time=simulator.state.t
         )
+        DBS_freq = 130.0
 
         # Update the DBS Signal
         if call_index + 1 < len(controller_call_times):
-            DBS_freq = 130.0
+
             # Calculate new DBS segment from the next DBS pulse time
             if next_DBS_pulse_time < controller_call_times[call_index + 1]:
 

@@ -453,10 +453,12 @@ if __name__ == "__main__":
         DBS_amp = controller.update(
             state_value=lfp_beta_average_value, current_time=simulator.state.t
         )
+        DBS_freq = 130.0
 
         # Update the DBS Signal
         if call_index + 1 < len(controller_call_times):
 
+            # Calculate new DBS segment from the next DBS pulse time
             if next_DBS_pulse_time < controller_call_times[call_index + 1]:
 
                 GPe_next_DBS_pulse_time = next_DBS_pulse_time
@@ -473,7 +475,7 @@ if __name__ == "__main__":
                     last_pulse_time_prior=0,
                     dt=simulator.state.dt,
                     amplitude=-DBS_amp,
-                    frequency=130.0,
+                    frequency=DBS_freq,
                     pulse_width=0.06,
                     offset=0,
                 )
@@ -545,6 +547,11 @@ if __name__ == "__main__":
     controller_measured_error_values = np.asarray(controller.error_history)
     controller_output_values = np.asarray(controller.output_history)
     controller_sample_times = np.asarray(controller.sample_times)
+    controller_reference_history = np.asarray(controller.reference_history)
+    controller_iteration_history = np.asarray(controller.iteration_history)
+    controller_parameter_history = np.asarray(controller.parameter_history)
+    controller_integral_term_history = np.asarray(controller.integral_term_history)
+
     if rank == 0:
         np.savetxt(
             simulation_output_dir + "/controller_beta_values.csv",
@@ -564,6 +571,26 @@ if __name__ == "__main__":
         np.savetxt(
             simulation_output_dir + "/controller_sample_times.csv",
             controller_sample_times,
+            delimiter=",",
+        )
+        np.savetxt(
+            simulation_output_dir + "/controller_iteration_values.csv",
+            controller_iteration_history,
+            delimiter=",",
+        )
+        np.savetxt(
+            simulation_output_dir + "/controller_reference_values.csv",
+            controller_reference_history,
+            delimiter=",",
+        )
+        np.savetxt(
+            simulation_output_dir + "/controller_parameter_values.csv",
+            controller_parameter_history,
+            delimiter=",",
+        )
+        np.savetxt(
+            simulation_output_dir + "/controller_integral_term_values.csv",
+            controller_integral_term_history,
             delimiter=",",
         )
 
