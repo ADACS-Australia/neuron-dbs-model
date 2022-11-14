@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed April 03 14:27:26 2019
+Description:
+    Cortico-Basal Ganglia Network Model implemented in PyNN using the NEURON simulator.
+    This version of the model loads the model steady state and implements either DBS
+    ampltiude or frequency modulation controllers, where the beta ARV from the STN LFP
+    is calculated at each controller call and used to update the amplitude/frequency of
+    the DBS waveform that is applied to the network.
 
-Description: Cortico-Basal Ganglia Network Model implemented in PyNN using the
-            NEURON simulator. This version of the model loads the model steady
-            state and implements DBS ampltiude modulation controllers where
-            the beta ARV from the STN LFP is calculated at each controller
-            call and used to update the amplitude of the DBS waveform that is
-            applied to the network. Full documentation of the model and
-            controllers used is given in:
+    Full documentation of the model and controllers used is given in:
+    https://www.frontiersin.org/articles/10.3389/fnins.2020.00166/
 
-            https://www.frontiersin.org/articles/10.3389/fnins.2020.00166/
-
-@author: John Fleming, john.fleming@ucdconnect.ie
+Original author: John Fleming, john.fleming@ucdconnect.ie
 """
 import os
 
@@ -35,6 +33,7 @@ import sys
 import argparse
 from utils import make_beta_cheby1_filter, calculate_avg_beta_power
 from model import load_network, electrode_distance
+from config import Config, get_controller_kwargs
 
 # Import global variables for GPe DBS
 import Global_Variables as GV
@@ -49,31 +48,12 @@ if __name__ == "__main__":
     # TODO: Fix the steady_state restore error when
     # simulation_runtime < steady_state_duration - 1
 
-    parser = argparse.ArgumentParser(
-        prog=__file__, description="CBG Model with amplitude modulation"
-    )
-    parser.add_argument("-t", "--time", default=32000.0, help="simulation runtime")
-    parser.add_argument(
-        "-c", "--controller", default="PID", choices=["PID", "zero"], help="Controller"
-    )
-    parser.add_argument("--kp", default=0.23)
-    parser.add_argument("--ti", default=0.2)
-    parser.add_argument("--td", default=0)
-
-    # Necessary to manually remove nrniv and __file__ when script is called via nrniv
-    args = sys.argv
-    for item in args:
-        if __file__ in item or "nrniv" in item:
-            args.remove(item)
-
-    args, unknown = parser.parse_known_args(args)
-
-    # Duration of simulation from steady state
-    simulation_runtime = float(args.time)
-    controller_type = args.controller
-    kp = float(args.kp)
-    ti = float(args.ti)
-    td = float(args.td)
+    parser = argparse.ArgumentParser(prog=__file__, description="CBG Model")
+    parser.add_argument("filename", help="yaml configuration file")
+    args, unknown = parser.parse_known_args()
+    c = Config(args.filename)
+    simulation_runtime = c.RunTime
+    controller_type = c.Controller
 
     sim_total_time = (
         steady_state_duration + simulation_runtime + timestep
@@ -215,20 +195,14 @@ if __name__ == "__main__":
     if len(controller_call_times) == 0:
         controller_call_times = np.array([controller_start])
 
+    controller_kwargs = get_controller_kwargs(controller_type, c)
+
     # Initialize the Controller being used:
     # Controller sampling period, Ts, is in sec
     if controller_type == "zero":
-        controller = ZeroController(SetPoint=0, Ts=0)
+        controller = ZeroController(**controller_kwargs)
     else:
-        controller = StandardPIDController(
-            SetPoint=1.0414e-04,
-            Kp=kp,
-            Ti=ti,
-            Td=td,
-            Ts=0.02,
-            MinValue=0.0,
-            MaxValue=3.0,
-        )
+        controller = StandardPIDController(**controller_kwargs)
     start_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     output_dirname = os.environ.get("PYNN_OUTPUT_DIRNAME", "Simulation_Output_Results")
     output_prefix = f"{output_dirname}/Controller_Simulations/Amp/"
@@ -458,7 +432,7 @@ if __name__ == "__main__":
         # Update the DBS Signal
         if call_index + 1 < len(controller_call_times):
 
-            # Calculate new DBS segment from the next DBS pulse time
+        # Calculate new DBS segment from the next DBS pulse time
             if next_DBS_pulse_time < controller_call_times[call_index + 1]:
 
                 GPe_next_DBS_pulse_time = next_DBS_pulse_time
