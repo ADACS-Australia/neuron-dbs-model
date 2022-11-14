@@ -23,27 +23,29 @@ patching file ./neuron/simulator.py
 patching file ./neuron/standardmodels/electrodes.py
 ```
 
-3) Run the model
+3.1) Run a steady state sim
 ```shell
 $ cd Cortex_BasalGanglia_DBS_model/
-$ python run_CBG_Model_to_SS.py
+$ ./run_steadystate.py
+```
+
+3.2) Run the model with a config file
+```shell
+$ cd Cortex_BasalGanglia_DBS_model/
+$ ./run_model.py conf_amp.yml
 ```
 
 To run with MPI
 ```shell
 $ cd Cortex_BasalGanglia_DBS_model/
-$ mpirun -n 4 python run_CBG_Model_to_SS.py
-```
-or use `nrniv`
-```shell
-$ mpirun -n 4 nrniv -nogui -python -mpi run_CBG_Model_to_SS.py
+$ mpirun -n 4 ./run_model.py conf_amp.yml
 ```
 
 You can change the output directory for results using the environment variable `PYNN_OUTPUT_DIRNAME`
 ```shell
 $ cd Cortex_BasalGanglia_DBS_model/
 $ export PYNN_OUTPUT_DIRNAME="my_results_dir"
-$ mpirun -n 4 python run_CBG_Model_to_SS.py
+$ mpirun -n 4 ./run_model.py conf_amp.yml
 ```
 
 # Plotting results
@@ -55,7 +57,7 @@ $ ./plot_ss.py Cortex_BasalGanglia_DBS_model/Simulation_Output_Results/Steady_St
 To save your plot, us the command line option `-s`
 ```shell
 $ ./plot_ss.py --help
-usage: plot_ss.py [-h] [-s] filename
+usage: plot.py [-h] [-s] filename
 
 Plot STN_LFP.mat files
 
