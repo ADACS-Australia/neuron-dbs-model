@@ -18,7 +18,7 @@ import os
 
 # No GUI please
 opts = os.environ.get("NEURON_MODULE_OPTIONS", "")
-if not "nogui" in opts:
+if "nogui" not in opts:
     os.environ["NEURON_MODULE_OPTIONS"] = opts + " -nogui"
 
 from mpi4py import MPI
