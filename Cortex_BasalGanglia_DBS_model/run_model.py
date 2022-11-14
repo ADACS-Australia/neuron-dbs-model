@@ -14,6 +14,12 @@ Description:
 Original author: John Fleming, john.fleming@ucdconnect.ie
 """
 import os
+from pathlib import Path
+
+# Change working directory so that imports works (save old)
+oldwd = Path(os.getcwd()).resolve()
+newpwd = Path(__file__).resolve().parent
+os.chdir(newpwd)
 
 # No GUI please
 opts = os.environ.get("NEURON_MODULE_OPTIONS", "")
@@ -52,10 +58,12 @@ if __name__ == "__main__":
     # TODO: Fix the steady_state restore error when
     # simulation_runtime < steady_state_duration - 1
 
+    os.chdir(oldwd)
     parser = argparse.ArgumentParser(prog=__file__, description="CBG Model")
     parser.add_argument("filename", nargs='?', help="yaml configuration file")
     args, unknown = parser.parse_known_args()
     c = Config(args.filename)
+    os.chdir(newpwd)
     simulation_runtime = c.RunTime
     controller_type = c.Controller
 

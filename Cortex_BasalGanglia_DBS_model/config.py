@@ -56,7 +56,7 @@ class Config(object):
     def __init__(self, filename):
 
         if filename:
-            self.filename = Path(filename)
+            self.filename = Path(filename).resolve()
             with self.filename.open("r") as f:
                 conf = yaml.safe_load(f)
         else:
