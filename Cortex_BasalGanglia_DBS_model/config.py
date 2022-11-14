@@ -24,7 +24,7 @@ ift_schema = dict(
     Ts={"type": "float", "coerce": float},
     MinValue={"type": "float", "coerce": float},
     MaxValue={"type": "float", "coerce": float},
-    experiment_time={"type": "float", "coerce": float},
+    stage_length={"type": "float", "coerce": float},
 )
 
 
@@ -32,15 +32,15 @@ class Config(object):
     schema = dict(
         Controller={
             "type": "string",
-            "coerce": (str, lambda x: x.lower()),
-            "default": "zero",
-            "allowed": ("zero", "pid", "ift"),
+            "coerce": (str, lambda x: x.upper()),
+            "default": "ZERO",
+            "allowed": ("ZERO", "PID", "IFT"),
         },
         Modulation={
             "type": "string",
             "coerce": (str, lambda x: x.lower()),
-            "default": "",
-            "allowed": ("amplitude", "frequency", ""),
+            "default": "none",
+            "allowed": ("amplitude", "frequency", "none", ""),
         },
         RunTime={"type": "float", "coerce": float, "default": 32000.0},
         SetPoint={"type": "float", "coerce": float, "default": 0},
@@ -72,14 +72,14 @@ class Config(object):
         return str(vars(self)).strip("{}").replace(", ", ",\n")
 
 
-def get_controller_kwargs(controller, config):
+def get_controller_kwargs(config):
     v = Validator(require_all=True, purge_unknown=True)
-
-    if controller == "zero":
+    controller = config.Controller
+    if controller == "ZERO":
         schema = zero_schema
-    elif controller == "pid":
+    elif controller == "PID":
         schema = pid_schema
-    elif controller == "ift":
+    elif controller == "IFT":
         schema = ift_schema
     else:
         raise RuntimeError("Invalid controller type")

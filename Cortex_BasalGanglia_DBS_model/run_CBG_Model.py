@@ -23,7 +23,11 @@ from mpi4py import MPI
 import neuron
 from pyNN.neuron import setup, run_until, end, simulator
 from pyNN.parameters import Sequence
-from Controllers import StandardPIDController, ZeroController, StandardPIDController
+from Controllers import (
+    ZeroController,
+    StandardPIDController,
+    IterativeFeedbackTuningPIController,
+)
 import neo.io
 import quantities as pq
 import numpy as np
@@ -65,8 +69,10 @@ if __name__ == "__main__":
     if rank == 0:
         print(
             "\nINFO: Running simulation for %.0f ms after steady state (%.0f ms) with %s control"
-            % (simulation_runtime, steady_state_duration, controller_type.upper())
+            % (simulation_runtime, steady_state_duration, controller_type)
         )
+        print("Configuration:")
+        print(c)
 
     # Make beta band filter centred on 25Hz (cutoff frequencies are 21-29 Hz)
     # for biomarker estimation
@@ -194,14 +200,20 @@ if __name__ == "__main__":
     if len(controller_call_times) == 0:
         controller_call_times = np.array([controller_start])
 
-    controller_kwargs = get_controller_kwargs(controller_type, c)
-
     # Initialize the Controller being used:
     # Controller sampling period, Ts, is in sec
-    if controller_type == "zero":
-        controller = ZeroController(**controller_kwargs)
+    if controller_type == "ZERO":
+        Controller = ZeroController
+    elif controller_type == "PID":
+        Controller = StandardPIDController
+    elif controller_type == "IFT":
+        Controller = IterativeFeedbackTuningPIController
     else:
-        controller = StandardPIDController(**controller_kwargs)
+        raise RuntimeError("Bad choice of Controller")
+
+    controller_kwargs = get_controller_kwargs(c)
+    controller = Controller(**controller_kwargs)
+
     start_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     output_dirname = os.environ.get("PYNN_OUTPUT_DIRNAME", "Simulation_Output_Results")
     output_prefix = f"{output_dirname}/Controller_Simulation/"
@@ -212,7 +224,7 @@ if __name__ == "__main__":
     # Generate a square wave which represents the DBS signal
     # Needs to be initialized to zero when unused to prevent
     # open-circuit of cortical collateral extracellular mechanism
-    if c.Modulation == 'frequency':
+    if c.Modulation == "frequency":
         last_pulse_time_prior = steady_state_duration
     else:
         last_pulse_time_prior = 0
@@ -269,7 +281,7 @@ if __name__ == "__main__":
         [0, 0, 0, 1, 4, 8, 19, 30, 43, 59, 82, 100, 100, 100]
     )
 
-    if c.Modulation == 'frequency':
+    if c.Modulation == "frequency":
         last_pulse_time_prior = steady_state_duration
     else:
         last_pulse_time_prior = 0
@@ -435,7 +447,7 @@ if __name__ == "__main__":
         if rank == 0:
             print("Beta Average: %f" % lfp_beta_average_value)
 
-        if c.Modulation == 'frequency':
+        if c.Modulation == "frequency":
             # Calculate the updated DBS Frequency
             DBS_amp = 1.5
             DBS_freq = controller.update(
@@ -451,7 +463,7 @@ if __name__ == "__main__":
         # Update the DBS Signal
         if call_index + 1 < len(controller_call_times):
 
-            if c.Modulation == 'frequency':
+            if c.Modulation == "frequency":
                 last_pulse_time_prior = last_DBS_pulse_time
                 # Check if the frequency needs to change before the last time that was calculated
                 if DBS_freq != last_freq_calculated:
@@ -467,7 +479,7 @@ if __name__ == "__main__":
             else:
                 last_pulse_time_prior = 0
 
-        # Calculate new DBS segment from the next DBS pulse time
+            # Calculate new DBS segment from the next DBS pulse time
             if next_DBS_pulse_time < controller_call_times[call_index + 1]:
 
                 GPe_next_DBS_pulse_time = next_DBS_pulse_time
