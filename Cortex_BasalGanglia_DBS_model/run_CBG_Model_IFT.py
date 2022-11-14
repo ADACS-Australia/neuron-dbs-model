@@ -211,12 +211,12 @@ if __name__ == "__main__":
     # Controller sampling period, Ts, is in sec
     controller = IterativeFeedbackTuningPIController(
         stage_length=experiment_time,
-        setpoint=1.0414e-04,
-        kp_init=0.4,
-        ti_init=0.2,
-        ts=0.02,
-        min_value=0.0,
-        max_value=3.0,
+        SetPoint=1.0414e-04,
+        Kp=0.4,
+        Ti=0.2,
+        Ts=0.02,
+        MinValue=0.0,
+        MaxValue=3.0,
     )
     start_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     output_dirname = os.environ.get("PYNN_OUTPUT_DIRNAME", "Simulation_Output_Results")

@@ -218,7 +218,7 @@ if __name__ == "__main__":
     # Initialize the Controller being used:
     # Controller sampling period, Ts, is in sec
     if controller_type == "zero":
-        controller = ZeroController(setpoint=0, Ts=0)
+        controller = ZeroController(SetPoint=0, Ts=0)
     else:
         controller = StandardPIDController(
             SetPoint=1.0414e-04,
