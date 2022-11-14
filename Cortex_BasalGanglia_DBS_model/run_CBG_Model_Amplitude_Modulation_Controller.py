@@ -48,7 +48,6 @@ if __name__ == "__main__":
     steady_state_duration = 6000.0  # Duration of simulation steady state
     # TODO: Fix the steady_state restore error when
     # simulation_runtime < steady_state_duration - 1
-    # Duration of simulation from steady state
 
     parser = argparse.ArgumentParser(
         prog=__file__, description="CBG Model with amplitude modulation"
@@ -69,6 +68,7 @@ if __name__ == "__main__":
 
     args, unknown = parser.parse_known_args(args)
 
+    # Duration of simulation from steady state
     simulation_runtime = float(args.time)
     controller_type = args.controller
     kp = float(args.kp)
@@ -217,7 +217,6 @@ if __name__ == "__main__":
 
     # Initialize the Controller being used:
     # Controller sampling period, Ts, is in sec
-    start_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     if controller_type == "zero":
         controller = ZeroController(setpoint=0, Ts=0)
     else:
@@ -230,7 +229,7 @@ if __name__ == "__main__":
             MinValue=0.0,
             MaxValue=3.0,
         )
-
+    start_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     output_dirname = os.environ.get("PYNN_OUTPUT_DIRNAME", "Simulation_Output_Results")
     output_prefix = f"{output_dirname}/Controller_Simulations/Amp/"
     simulation_identifier = controller.label + "-" + start_timestamp
@@ -239,7 +238,7 @@ if __name__ == "__main__":
     # Generate a square wave which represents the DBS signal
     # Needs to be initialized to zero when unused to prevent
     # open-circuit of cortical collateral extracellular mechanism
-    DBS_Signal, DBS_times, next_DBS_pulse_time, _ = controller.generate_dbs_signal(
+    (DBS_Signal, DBS_times, next_DBS_pulse_time, _,) = controller.generate_dbs_signal(
         start_time=steady_state_duration + 10 + simulator.state.dt,
         stop_time=sim_total_time,
         dt=simulator.state.dt,
@@ -253,11 +252,11 @@ if __name__ == "__main__":
     DBS_times = np.hstack((np.array([0, steady_state_duration + 10]), DBS_times))
 
     # Get DBS time indexes which corresponds to controller call times
-    controller_DBS_indexs = []
+    controller_DBS_indices = []
     for call_time in controller_call_times:
         indices = np.where(DBS_times == call_time)[0]
         if len(indices) > 0:
-            controller_DBS_indexs.extend([indices[0]])
+            controller_DBS_indices.extend([indices[0]])
 
     # Set first portion of DBS signal (Up to first controller call after
     # steady state) to zero amplitude
@@ -525,22 +524,12 @@ if __name__ == "__main__":
         last_write_time = simulator.state.t
 
     # # Write population membrane voltage data to file
-    # Cortical_Pop.write_data(simulation_output_dir +
-    #                         "/Cortical_Pop/Cortical_Collateral_v.mat",
-    #                         'collateral(0.5).v', clear=False)
-    # Cortical_Pop.write_data(simulation_output_dir +
-    #                         "/Cortical_Pop/Cortical_Soma_v.mat",
-    #                         'soma(0.5).v', clear=True)
-    # Interneuron_Pop.write_data(simulation_output_dir +
-    #                            "/Interneuron_Pop/Interneuron_Soma_v.mat",
-    #                            'soma(0.5).v', clear=True)
-    # GPe_Pop.write_data(simulation_output_dir + "/GPe_Pop/GPe_Soma_v.mat",
-    #                    'soma(0.5).v', clear=True)
-    # GPi_Pop.write_data(simulation_output_dir + "/GPi_Pop/GPi_Soma_v.mat",
-    #                    'soma(0.5).v', clear=True)
-    # Thalamic_Pop.write_data(simulation_output_dir +
-    #                         "/Thalamic_Pop/Thalamic_Soma_v.mat",
-    #                         'soma(0.5).v', clear=True)
+    # Cortical_Pop.write_data(simulation_output_dir+"/Cortical_Pop/Cortical_Collateral_v.mat", 'collateral(0.5).v', clear=False)
+    # Cortical_Pop.write_data(simulation_output_dir+"/Cortical_Pop/Cortical_Soma_v.mat", 'soma(0.5).v', clear=True)
+    # Interneuron_Pop.write_data(simulation_output_dir+"/Interneuron_Pop/Interneuron_Soma_v.mat", 'soma(0.5).v', clear=True)
+    # GPe_Pop.write_data(simulation_output_dir+"/GPe_Pop/GPe_Soma_v.mat", 'soma(0.5).v', clear=True)
+    # GPi_Pop.write_data(simulation_output_dir+"/GPi_Pop/GPi_Soma_v.mat", 'soma(0.5).v', clear=True)
+    # Thalamic_Pop.write_data(simulation_output_dir+"/Thalamic_Pop/Thalamic_Soma_v.mat", 'soma(0.5).v', clear=True)
 
     # Write controller values to csv files
     controller_measured_beta_values = np.asarray(controller.state_history)
@@ -584,29 +573,21 @@ if __name__ == "__main__":
     w = neo.io.NeoMatlabIO(filename=simulation_output_dir + "/STN_LFP.mat")
     w.write_block(STN_LFP_Block)
 
-    # # Write LFP AMPA and GABAa conmponents to file
+    # # Write LFP AMPA and GABAa components to file
     # STN_LFP_AMPA_Block = neo.Block(name='STN_LFP_AMPA')
     # STN_LFP_AMPA_seg = neo.Segment(name='segment_0')
     # STN_LFP_AMPA_Block.segments.append(STN_LFP_AMPA_seg)
-    # STN_LFP_AMPA_signal = neo.AnalogSignal(STN_LFP_AMPA, units='mV',
-    #                                        t_start=0*pq.ms,
-    #                                        sampling_rate=pq.Quantity(
-    #                                            simulator.state.dt, '1/ms'))
+    # STN_LFP_AMPA_signal = neo.AnalogSignal(STN_LFP_AMPA, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
     # STN_LFP_AMPA_seg.analogsignals.append(STN_LFP_AMPA_signal)
-    # w = neo.io.NeoMatlabIO(filename=simulation_output_dir +
-    #                        "/STN_LFP_AMPA.mat")
+    # w = neo.io.NeoMatlabIO(filename=simulation_output_dir+"/STN_LFP_AMPA.mat")
     # w.write_block(STN_LFP_AMPA_Block)
 
     # STN_LFP_GABAa_Block = neo.Block(name='STN_LFP_GABAa')
     # STN_LFP_GABAa_seg = neo.Segment(name='segment_0')
     # STN_LFP_GABAa_Block.segments.append(STN_LFP_GABAa_seg)
-    # STN_LFP_GABAa_signal = neo.AnalogSignal(STN_LFP_GABAa, units='mV',
-    #                                         t_start=0*pq.ms,
-    #                                         sampling_rate=pq.Quantity(
-    #                                             simulator.state.dt, '1/ms'))
+    # STN_LFP_GABAa_signal = neo.AnalogSignal(STN_LFP_GABAa, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
     # STN_LFP_GABAa_seg.analogsignals.append(STN_LFP_GABAa_signal)
-    # w = neo.io.NeoMatlabIO(filename=simulation_output_dir +
-    #                        "/STN_LFP_GABAa.mat")
+    # w = neo.io.NeoMatlabIO(filename=simulation_output_dir+"/STN_LFP_GABAa.mat")
     # w.write_block(STN_LFP_GABAa_Block)
 
     # Write the DBS Signal to .mat file
