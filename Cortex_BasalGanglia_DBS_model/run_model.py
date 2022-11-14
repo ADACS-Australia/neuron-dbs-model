@@ -53,7 +53,7 @@ if __name__ == "__main__":
     # simulation_runtime < steady_state_duration - 1
 
     parser = argparse.ArgumentParser(prog=__file__, description="CBG Model")
-    parser.add_argument("filename", help="yaml configuration file")
+    parser.add_argument("filename", nargs='?', help="yaml configuration file")
     args, unknown = parser.parse_known_args()
     c = Config(args.filename)
     simulation_runtime = c.RunTime

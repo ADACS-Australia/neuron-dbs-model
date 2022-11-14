@@ -55,10 +55,13 @@ class Config(object):
 
     def __init__(self, filename):
 
-        self.filename = Path(filename)
-
-        with self.filename.open("r") as f:
-            conf = yaml.safe_load(f)
+        if filename:
+            self.filename = Path(filename)
+            with self.filename.open("r") as f:
+                conf = yaml.safe_load(f)
+        else:
+            self.filename = None
+            conf = {}
 
         v = Validator(require_all=False)
 
