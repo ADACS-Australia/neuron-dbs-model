@@ -40,6 +40,7 @@ To run with MPI
 $ cd Cortex_BasalGanglia_DBS_model/
 $ mpirun -n 4 ./run_model.py conf_amp.yml
 ```
+Note: you must run the steady state and model scripts with the SAME number of MPI tasks.
 
 You can change the output directory for results using the environment variable `PYNN_OUTPUT_DIRNAME`
 ```shell
