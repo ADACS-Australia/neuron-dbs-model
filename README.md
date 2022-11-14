@@ -26,13 +26,17 @@ patching file ./neuron/standardmodels/electrodes.py
 3) Run the model
 ```shell
 $ cd Cortex_BasalGanglia_DBS_model/
-$ python run_CBG_Model_to_SS.py neuron
+$ python run_CBG_Model_to_SS.py
 ```
 
 To run with MPI
 ```shell
 $ cd Cortex_BasalGanglia_DBS_model/
-$ mpirun -np 4 nrniv -nogui -python -mpi run_CBG_Model_to_SS.py
+$ mpirun -n 4 python run_CBG_Model_to_SS.py
+```
+or use `nrniv`
+```shell
+$ mpirun -n 4 nrniv -nogui -python -mpi run_CBG_Model_to_SS.py
 ```
 
 You can change the output directory for results using the environment variable `PYNN_OUTPUT_DIRNAME`
