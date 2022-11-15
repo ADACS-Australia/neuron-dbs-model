@@ -128,6 +128,7 @@ if __name__ == "__main__":
         sim_total_time,
         simulation_runtime,
         v_init,
+        rng_seed,
     )
 
     # Define state variables to record from each population
@@ -229,6 +230,8 @@ if __name__ == "__main__":
 
     simulation_identifier = controller.label + "-" + start_timestamp
     simulation_output_dir = output_prefix + simulation_identifier
+    if rank == 0:
+        print(f"Saving results to {simulation_output_dir}")
 
     # Generate a square wave which represents the DBS signal
     # Needs to be initialized to zero when unused to prevent
