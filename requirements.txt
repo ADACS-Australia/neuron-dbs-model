@@ -5,3 +5,4 @@ PyNN>=0.10.1
 scipy>=1.8.0
 argparse>=1.4.0
 Cerberus>=1.3.4
+PyYAML>=6.0
