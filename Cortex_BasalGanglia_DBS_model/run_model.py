@@ -51,9 +51,6 @@ h = neuron.h
 comm = MPI.COMM_WORLD
 
 if __name__ == "__main__":
-    rng_seed = 3695
-    timestep = 0.01
-    steady_state_duration = 6000.0  # Duration of simulation steady state
     # TODO: Fix the steady_state restore error when
     # simulation_runtime < steady_state_duration - 1
 
@@ -66,8 +63,12 @@ if __name__ == "__main__":
     args, unknown = parser.parse_known_args()
     c = Config(args.config_file)
     os.chdir(newpwd)
+
     simulation_runtime = c.RunTime
     controller_type = c.Controller
+    rng_seed = c.RandomSeed
+    timestep = c.TimeStep
+    steady_state_duration = c.SteadyStateDuration
 
     sim_total_time = (
         steady_state_duration + simulation_runtime + timestep
