@@ -54,6 +54,12 @@ if __name__ == "__main__":
     )
     parser.add_argument("-t", "--time", default=8000.0, help="simulation runtime")
     parser.add_argument("-e", "--experiment-time", default=2.0)
+    parser.add_argument("--kp-init", default=1.0)
+    parser.add_argument("--ti-init", default=0.2)
+    parser.add_argument("--gamma", default=0.01)
+    parser.add_argument("--lam", default=1e-8)
+    parser.add_argument("--kp-min", default=0.01)
+    parser.add_argument("--ti-min", default=0.01)
 
     # Necessary to manually remove nrniv and __file__ when script is called via nrniv
     args = sys.argv
@@ -78,8 +84,20 @@ if __name__ == "__main__":
     if rank == 0:
         print(
             "INFO: Running simulation for %.0f ms after steady state "
-            "(%.0f ms) with IFT control (experiment time %.2f s)"
-            % (simulation_runtime, steady_state_duration, experiment_time)
+            "(%.0f ms) with IFT control (experiment time %.2f s)\n"
+            "Kp: init=%f min=%f\tTi: init=%f min=%f\n"
+            "gamma=%e, lambda=%e"
+            % (
+                simulation_runtime,
+                steady_state_duration,
+                experiment_time,
+                args.kp_init,
+                args.kp_min,
+                args.ti_init,
+                args.ti_min,
+                args.gamma,
+                args.lam,
+            )
         )
 
     # Make beta band filter centred on 25Hz (cutoff frequencies are 21-29 Hz)
@@ -127,6 +145,7 @@ if __name__ == "__main__":
         sim_total_time,
         simulation_runtime,
         v_init,
+        rng_seed,
     )
 
     # Define state variables to record from each population
@@ -211,17 +230,23 @@ if __name__ == "__main__":
     controller = IterativeFeedbackTuningPIController(
         stage_length=experiment_time,
         setpoint=1.0414e-04,
-        kp_init=0.4,
-        ti_init=0.2,
+        kp_init=args.kp_init,
+        ti_init=args.ti_init,
         ts=0.02,
         min_value=0.0,
         max_value=3.0,
+        gamma=args.gamma,
+        lam=args.lam,
+        min_kp=args.kp_min,
+        min_ti=args.ti_min,
     )
 
     output_dirname = os.environ.get("PYNN_OUTPUT_DIRNAME", "Simulation_Output_Results")
     output_prefix = f"{output_dirname}/Controller_Simulations/IFT/"
     simulation_identifier = controller.label + "-" + start_timestamp
     simulation_output_dir = output_prefix + simulation_identifier
+    if rank == 0:
+        print(f"Saving results to {simulation_output_dir}")
 
     # Generate a square wave which represents the DBS signal
     # Needs to be initialized to zero when unused to prevent
