@@ -15,5 +15,5 @@ MaxValue: 3.0
 # IFT specific options
 gamma: 0.01
 lam: 1.e-8
-kp-min: 0.01
-ti-min: 0.01
+min_kp: 0.01
+min_ti: 0.01

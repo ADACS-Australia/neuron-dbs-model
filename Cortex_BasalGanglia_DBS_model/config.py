@@ -27,8 +27,8 @@ ift_schema = dict(
     stage_length={"type": "float", "coerce": float},
     gamma={"type": "float", "coerce": float},
     lam={"type": "float", "coerce": float},
-    kp_min={"type": "float", "coerce": float},
-    ti_min={"type": "float", "coerce": float},
+    min_kp={"type": "float", "coerce": float},
+    min_ti={"type": "float", "coerce": float},
 )
 
 
@@ -57,8 +57,8 @@ class Config(object):
         stage_length={"type": "float", "coerce": float, "default": 0},
         gamma={"type": "float", "coerce": float, "default": 0.01},
         lam={"type": "float", "coerce": float, "default": 1e-8},
-        kp_min={"type": "float", "coerce": float, "default": 0.01},
-        ti_min={"type": "float", "coerce": float, "default": 0.01},
+        min_kp={"type": "float", "coerce": float, "default": 0.01},
+        min_ti={"type": "float", "coerce": float, "default": 0.01},
     )
 
     def __init__(self, filename):
