@@ -61,14 +61,14 @@ class Config(object):
         min_ti={"type": "float", "coerce": float, "default": 0.01},
     )
 
-    def __init__(self, filename):
+    def __init__(self, config_file):
 
-        if filename:
-            self.filename = Path(filename).resolve()
-            with self.filename.open("r") as f:
+        if config_file:
+            self.config_file = Path(config_file).resolve()
+            with self.config_file.open("r") as f:
                 conf = yaml.safe_load(f)
         else:
-            self.filename = None
+            self.config_file = None
             conf = {}
 
         v = Validator(require_all=False)

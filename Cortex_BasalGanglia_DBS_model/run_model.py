@@ -78,12 +78,8 @@ if __name__ == "__main__":
     rank = setup(timestep=timestep, rngseed=rng_seed)
 
     if rank == 0:
-        print(
-            "\nINFO: Running simulation for %.0f ms after steady state (%.0f ms) with %s control"
-            % (simulation_runtime, steady_state_duration, controller_type)
-        )
-        print("Configuration:")
-        print(c)
+        print("\n------ Configuration ------")
+        print(c,'\n')
 
     # Make beta band filter centred on 25Hz (cutoff frequencies are 21-29 Hz)
     # for biomarker estimation
@@ -132,6 +128,8 @@ if __name__ == "__main__":
         v_init,
         rng_seed,
     )
+    if rank == 0:
+        print("Network loaded.")
 
     # Define state variables to record from each population
     Cortical_Pop.record("soma(0.5).v", sampling_interval=rec_sampling_interval)
@@ -228,7 +226,7 @@ if __name__ == "__main__":
 
     simulation_output_dir = oldpwd / args.output_dir
     if rank == 0:
-        print(f"Saving results to {simulation_output_dir}")
+        print(f"Output directory: {simulation_output_dir}")
 
     # Generate a square wave which represents the DBS signal
     # Needs to be initialized to zero when unused to prevent
@@ -348,11 +346,15 @@ if __name__ == "__main__":
     last_write_time = steady_state_duration
 
     if rank == 0:
-        print("Loaded the network, running to steady state...")
+        print(f"\n---> Running simulation to steady state ({steady_state_duration} ms) ...")
     # Load the steady state
     run_until(steady_state_duration + simulator.state.dt, run_from_steady_state=False)
     if rank == 0:
-        print("Steady state finished. Running model...")
+        print("Steady state finished.")
+        print(
+            "\n---> Running simulation for %.0f ms after steady state (%.0f ms) with %s control\n"
+            % (simulation_runtime, steady_state_duration, controller_type)
+        )
 
     # Reload striatal spike times after loading the steady state
     Striatal_Pop.set(spike_times=striatal_spike_times[:, 0])
@@ -554,16 +556,10 @@ if __name__ == "__main__":
         # Write population data to file
         write_index = "{:.0f}_".format(call_index)
         suffix = "_{:.0f}ms-{:.0f}ms".format(last_write_time, simulator.state.t)
-
-        fname = (
-            simulation_output_dir
-            + "/STN_Pop/"
-            + write_index
-            + "STN_Soma_v"
-            + suffix
-            + ".mat"
+        fname = write_index + "STN_Soma_v" + suffix + ".mat"
+        STN_Pop.write_data(
+            simulation_output_dir / "STN_POP" / fname, "soma(0.5).v", clear=True
         )
-        STN_Pop.write_data(fname, "soma(0.5).v", clear=True)
 
         last_write_time = simulator.state.t
 
