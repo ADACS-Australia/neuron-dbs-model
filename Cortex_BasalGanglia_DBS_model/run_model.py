@@ -351,11 +351,11 @@ if __name__ == "__main__":
     last_write_time = steady_state_duration
 
     if rank == 0:
-        print("Loaded the network, loading the steady state")
+        print("Loaded the network, running to steady state...")
     # Load the steady state
-    run_until(steady_state_duration + simulator.state.dt, run_from_steady_state=True)
+    run_until(steady_state_duration + simulator.state.dt, run_from_steady_state=False)
     if rank == 0:
-        print("Loaded the steady state")
+        print("Steady state finished. Running model...")
 
     # Reload striatal spike times after loading the steady state
     Striatal_Pop.set(spike_times=striatal_spike_times[:, 0])
