@@ -25,6 +25,10 @@ ift_schema = dict(
     MinValue={"type": "float", "coerce": float},
     MaxValue={"type": "float", "coerce": float},
     stage_length={"type": "float", "coerce": float},
+    gamma={"type": "float", "coerce": float},
+    lam={"type": "float", "coerce": float},
+    kp_min={"type": "float", "coerce": float},
+    ti_min={"type": "float", "coerce": float},
 )
 
 
@@ -51,6 +55,10 @@ class Config(object):
         MinValue={"type": "float", "coerce": float, "default": 0},
         MaxValue={"type": "float", "coerce": float, "default": 3},
         stage_length={"type": "float", "coerce": float, "default": 0},
+        gamma={"type": "float", "coerce": float, "default": 0.01},
+        lam={"type": "float", "coerce": float, "default": 1e-8},
+        kp_min={"type": "float", "coerce": float, "default": 0.01},
+        ti_min={"type": "float", "coerce": float, "default": 0.01},
     )
 
     def __init__(self, filename):
