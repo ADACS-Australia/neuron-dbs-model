@@ -30,7 +30,7 @@ from mpi4py import MPI
 import neuron
 from pyNN.neuron import setup, run_until, end, simulator
 from pyNN.parameters import Sequence
-from Controllers import (
+from py.Controllers import (
     ZeroController,
     StandardPIDController,
     IterativeFeedbackTuningPIController,
@@ -40,20 +40,17 @@ import quantities as pq
 import numpy as np
 import math
 import argparse
-from utils import make_beta_cheby1_filter, calculate_avg_beta_power
-from model import load_network, electrode_distance
-from config import Config, get_controller_kwargs
+from py.utils import make_beta_cheby1_filter, calculate_avg_beta_power
+from py.network import load_network, electrode_distance
+from py.config import Config, get_controller_kwargs
 
 # Import global variables for GPe DBS
-import Global_Variables as GV
+import py.Global_Variables as GV
 
 h = neuron.h
 comm = MPI.COMM_WORLD
 
 if __name__ == "__main__":
-    # TODO: Fix the steady_state restore error when
-    # simulation_runtime < steady_state_duration - 1
-
     os.chdir(oldpwd)
     parser = argparse.ArgumentParser(description="CBG Model")
     parser.add_argument("config_file", nargs="?", help="yaml configuration file")

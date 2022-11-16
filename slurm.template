@@ -14,9 +14,4 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export PYNN_OUTPUT_DIRNAME="results_${SLURM_NTASKS_PER_NODE}"
 export PYTHONUNBUFFERED=yes
 
-cd Cortex_BasalGanglia_DBS_model/
-mkdir -p ${PYNN_OUTPUT_DIRNAME}
-
-srun time -f "real %e  user %U  sys %S" nrniv -nogui -python -mpi run_CBG_Model_to_SS.py
-
-cd $OLDPWD
+srun time -f "real %e  user %U  sys %S" ./run_model -o <output_directory> <path_to_config_file>
