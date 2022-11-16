@@ -16,11 +16,13 @@ $ pip install -r requirements.txt
 2) Patch your pyNN installation using the given script
 ```shell
 $ ./patch_and_compile.sh
+...
 Changing directory to /Users/<user>/anaconda/envs/neuron/lib/python3.10/site-packages/pyNN
 patching file ./common/control.py
 patching file ./neuron/__init__.py
 patching file ./neuron/simulator.py
 patching file ./neuron/standardmodels/electrodes.py
+...
 ```
 
 3) Run the model with a config file
