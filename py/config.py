@@ -1,6 +1,7 @@
+from pathlib import Path
+
 import yaml
 from cerberus import Validator
-from pathlib import Path
 
 zero_schema = dict(
     SetPoint={"type": "float", "coerce": float},

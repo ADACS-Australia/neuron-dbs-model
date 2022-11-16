@@ -1,28 +1,28 @@
 import numpy as np
-from pyNN import space
-from pyNN.parameters import Sequence
-from pyNN.neuron import (
-    Population,
-    StepCurrentSource,
-    SpikeSourceArray,
-    Projection,
-    StaticSynapse,
-    FromFileConnector,
-    NoisyCurrentSource,
-    FixedNumberPreConnector,
-)
-from pyNN.random import RandomDistribution, NumpyRNG
 from Cortical_Basal_Ganglia_Cell_Classes import (
     Cortical_Neuron_Type,
+    GP_Neuron_Type,
     Interneuron_Type,
     STN_Neuron_Type,
-    GP_Neuron_Type,
     Thalamic_Neuron_Type,
 )
 from Electrode_Distances import (
-    distances_to_electrode,
     collateral_distances_to_electrode,
+    distances_to_electrode,
 )
+from pyNN import space
+from pyNN.neuron import (
+    FixedNumberPreConnector,
+    FromFileConnector,
+    NoisyCurrentSource,
+    Population,
+    Projection,
+    SpikeSourceArray,
+    StaticSynapse,
+    StepCurrentSource,
+)
+from pyNN.parameters import Sequence
+from pyNN.random import NumpyRNG, RandomDistribution
 from utils import generate_poisson_spike_times
 
 

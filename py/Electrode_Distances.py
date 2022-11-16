@@ -16,8 +16,9 @@ Edits:
 # There must be some Python package out there that provides most of this stuff.
 # Distance computations are provided by scipy.spatial, but scipy is a fairly heavy dependency.
 
-import numpy
 import logging
+
+import numpy
 
 logger = logging.getLogger("PyNN")
 

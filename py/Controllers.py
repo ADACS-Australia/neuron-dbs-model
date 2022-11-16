@@ -10,6 +10,7 @@ https://www.frontiersin.org/articles/10.3389/fnins.2020.00166/
 """
 
 import math
+
 import numpy as np
 import scipy.signal as signal
 from mpi4py import MPI
