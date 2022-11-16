@@ -6,7 +6,7 @@ cd Cortex_BasalGanglia_DBS_model/
 nrnivmodl
 
 PYNN=$(python -c 'import pyNN; print(pyNN.__path__[0])')
-echo "--> Changing directory to $PYNN"
+echo "--> Applying PyNN patches"
 cd $PYNN
 
 # Apply patches
