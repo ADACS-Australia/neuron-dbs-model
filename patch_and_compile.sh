@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -e
 
-echo "Changing directory model"
-cd model
+echo "--> Changing directory hoc/"
+cd hoc
 # Compile
 nrnivmodl
 cd $OLDPWD
 
 PYNN=$(python -c 'import pyNN; print(pyNN.__path__[0])')
-echo "Changing directory to $PYNN"
+echo "--> Changing directory to $PYNN"
 cd $PYNN
 
 # Apply patches
@@ -16,5 +16,5 @@ diff -ru . $OLDPWD/Updated_PyNN_Files/ | patch -p0 || echo "WARNING: Assuming py
 
 # Compile
 cd neuron/nmodl
-echo "Changing directory to $(pwd)"
+echo "--> Changing directory to $(pwd)"
 nrnivmodl
