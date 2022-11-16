@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-MODEL="Cortex_BasalGanglia_DBS_model"
-
-echo "Changing directory to $MODEL"
-cd $MODEL
+echo "Changing directory model"
+cd model
 # Compile
 nrnivmodl
 cd $OLDPWD
@@ -14,7 +12,7 @@ echo "Changing directory to $PYNN"
 cd $PYNN
 
 # Apply patches
-diff -ru . $OLDPWD/$MODEL/Updated_PyNN_Files/ | patch -p0 || echo "WARNING: Assuming pyNN is already patched."
+diff -ru . $OLDPWD/Updated_PyNN_Files/ | patch -p0 || echo "WARNING: Assuming pyNN is already patched."
 
 # Compile
 cd neuron/nmodl
