@@ -561,7 +561,7 @@ if __name__ == "__main__":
         suffix = "_{:.0f}ms-{:.0f}ms".format(last_write_time, simulator.state.t)
         fname = write_index + "STN_Soma_v" + suffix + ".mat"
         STN_Pop.write_data(
-            str(simulation_output_dir / "STN_POP" / fname, "soma(0.5).v"), clear=True
+            str(simulation_output_dir / "STN_POP" / fname), "soma(0.5).v", clear=True
         )
 
         last_write_time = simulator.state.t
