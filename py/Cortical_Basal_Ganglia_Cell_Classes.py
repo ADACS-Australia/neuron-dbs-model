@@ -63,13 +63,14 @@
 
 from math import pi
 
-# Import global variables for GPe DBS
-import Global_Variables as GV
 import numpy as np
 from neuron import h
 from nrnutils import Mechanism, Section
 from pyNN.neuron import NativeCellType
 from pyNN.parameters import Sequence
+
+# Import global variables for GPe DBS
+from . import Global_Variables as GV
 
 try:
     reduce
