@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
     if rank == 0:
         print("\n------ Configuration ------")
-        print(c,'\n')
+        print(c, "\n")
 
     # Make beta band filter centred on 25Hz (cutoff frequencies are 21-29 Hz)
     # for biomarker estimation
@@ -347,7 +347,9 @@ if __name__ == "__main__":
     last_write_time = steady_state_duration
 
     if rank == 0:
-        print(f"\n---> Running simulation to steady state ({steady_state_duration} ms) ...")
+        print(
+            f"\n---> Running simulation to steady state ({steady_state_duration} ms) ..."
+        )
     # Load the steady state
     run_until(steady_state_duration + simulator.state.dt, run_from_steady_state=False)
     if rank == 0:
