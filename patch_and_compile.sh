@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-echo "--> Changing directory hoc/"
-cd hoc
-# Compile
-nrnivmodl
-cd $OLDPWD
+echo "--> Building MOD files"
+nrnivmodl hoc/
 
 PYNN=$(python -c 'import pyNN; print(pyNN.__path__[0])')
 echo "--> Changing directory to $PYNN"
