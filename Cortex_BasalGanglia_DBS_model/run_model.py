@@ -62,7 +62,10 @@ if __name__ == "__main__":
     )
     args, unknown = parser.parse_known_args()
 
-    config_file = Path(args.config_file).resolve()
+    if args.config_file:
+        config_file = Path(args.config_file).resolve()
+    else:
+        config_file = None
     output_dir = Path(args.output_dir).resolve()
     c = Config(args.config_file)
     os.chdir(newpwd)
