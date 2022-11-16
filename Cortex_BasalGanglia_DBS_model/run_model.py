@@ -61,6 +61,9 @@ if __name__ == "__main__":
         "-o", "--output-dir", default="RESULTS", help="output directory name"
     )
     args, unknown = parser.parse_known_args()
+
+    config_file = Path(args.config_file).resolve()
+    output_dir = Path(args.output_dir).resolve()
     c = Config(args.config_file)
     os.chdir(newpwd)
 
@@ -225,7 +228,7 @@ if __name__ == "__main__":
     controller_kwargs = get_controller_kwargs(c)
     controller = Controller(**controller_kwargs)
 
-    simulation_output_dir = oldpwd / args.output_dir
+    simulation_output_dir = output_dir
     if rank == 0:
         print(f"Output directory: {simulation_output_dir}")
 
