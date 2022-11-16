@@ -7,10 +7,10 @@ $ python -m venv neuron-env
 $ source ./neuron-env/bin/activate
 ```
 
-1) Install dependencies
+1) Install dependencies (some packages require NEURON to be installed first)
 ```shell
+$ pip install 'NEURON>=8.2.1'
 $ pip install -r requirements.txt
-$ pip install nrnutils>=0.2.0 # requires NEURON to be installed first
 ```
 
 2) Patch your pyNN installation using the given script
