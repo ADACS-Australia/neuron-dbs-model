@@ -25,8 +25,6 @@ os.chdir(newpwd)
 opts = os.environ.get("NEURON_MODULE_OPTIONS", "")
 if "nogui" not in opts:
     os.environ["NEURON_MODULE_OPTIONS"] = opts + " -nogui"
-# Always run unbuffered
-os.environ["PYTHONUNBUFFERED"] = 'yes'
 
 from mpi4py import MPI
 import neuron
