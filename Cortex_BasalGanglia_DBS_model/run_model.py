@@ -355,7 +355,7 @@ if __name__ == "__main__":
     if rank == 0:
         print("Steady state finished.")
         print(
-            "\n---> Running simulation for %.0f ms after steady state (%.0f ms) with %s control\n"
+            "\n---> Running simulation for %.0f ms after steady state (%.0f ms) with %s control"
             % (simulation_runtime, steady_state_duration, controller_type)
         )
 
@@ -561,18 +561,18 @@ if __name__ == "__main__":
         suffix = "_{:.0f}ms-{:.0f}ms".format(last_write_time, simulator.state.t)
         fname = write_index + "STN_Soma_v" + suffix + ".mat"
         STN_Pop.write_data(
-            simulation_output_dir / "STN_POP" / fname, "soma(0.5).v", clear=True
+            str(simulation_output_dir / "STN_POP" / fname, "soma(0.5).v"), clear=True
         )
 
         last_write_time = simulator.state.t
 
     # # Write population membrane voltage data to file
-    # Cortical_Pop.write_data(simulation_output_dir / "Cortical_Pop/Cortical_Collateral_v.mat", 'collateral(0.5).v', clear=False)
-    # Cortical_Pop.write_data(simulation_output_dir / "Cortical_Pop/Cortical_Soma_v.mat", 'soma(0.5).v', clear=True)
-    # Interneuron_Pop.write_data(simulation_output_dir / "Interneuron_Pop/Interneuron_Soma_v.mat", 'soma(0.5).v', clear=True)
-    # GPe_Pop.write_data(simulation_output_dir / "GPe_Pop/GPe_Soma_v.mat", 'soma(0.5).v', clear=True)
-    # GPi_Pop.write_data(simulation_output_dir / "GPi_Pop/GPi_Soma_v.mat", 'soma(0.5).v', clear=True)
-    # Thalamic_Pop.write_data(simulation_output_dir / "Thalamic_Pop/Thalamic_Soma_v.mat", 'soma(0.5).v', clear=True)
+    # Cortical_Pop.write_data(str(simulation_output_dir / "Cortical_Pop/Cortical_Collateral_v.mat"), 'collateral(0.5).v', clear=False)
+    # Cortical_Pop.write_data(str(simulation_output_dir / "Cortical_Pop/Cortical_Soma_v.mat"), 'soma(0.5).v', clear=True)
+    # Interneuron_Pop.write_data(str(simulation_output_dir / "Interneuron_Pop/Interneuron_Soma_v.mat"), 'soma(0.5).v', clear=True)
+    # GPe_Pop.write_data(str(simulation_output_dir / "GPe_Pop/GPe_Soma_v.mat", 'soma(0.5).v'), clear=True)
+    # GPi_Pop.write_data(str(simulation_output_dir / "GPi_Pop/GPi_Soma_v.mat", 'soma(0.5).v'), clear=True)
+    # Thalamic_Pop.write_data(str(simulation_output_dir / "Thalamic_Pop/Thalamic_Soma_v.mat"), 'soma(0.5).v', clear=True)
 
     # Write controller values to csv files
     controller_measured_beta_values = np.asarray(controller.state_history)
@@ -638,7 +638,7 @@ if __name__ == "__main__":
     )
     STN_LFP_seg.analogsignals.append(STN_LFP_signal)
 
-    w = neo.io.NeoMatlabIO(filename=simulation_output_dir / "STN_LFP.mat")
+    w = neo.io.NeoMatlabIO(filename=str(simulation_output_dir / "STN_LFP.mat"))
     w.write_block(STN_LFP_Block)
 
     # # Write LFP AMPA and GABAa components to file
@@ -647,7 +647,7 @@ if __name__ == "__main__":
     # STN_LFP_AMPA_Block.segments.append(STN_LFP_AMPA_seg)
     # STN_LFP_AMPA_signal = neo.AnalogSignal(STN_LFP_AMPA, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
     # STN_LFP_AMPA_seg.analogsignals.append(STN_LFP_AMPA_signal)
-    # w = neo.io.NeoMatlabIO(filename=simulation_output_dir / "STN_LFP_AMPA.mat")
+    # w = neo.io.NeoMatlabIO(filename=str(simulation_output_dir / "STN_LFP_AMPA.mat"))
     # w.write_block(STN_LFP_AMPA_Block)
 
     # STN_LFP_GABAa_Block = neo.Block(name='STN_LFP_GABAa')
@@ -655,7 +655,7 @@ if __name__ == "__main__":
     # STN_LFP_GABAa_Block.segments.append(STN_LFP_GABAa_seg)
     # STN_LFP_GABAa_signal = neo.AnalogSignal(STN_LFP_GABAa, units='mV', t_start=0*pq.ms, sampling_rate=pq.Quantity(simulator.state.dt, '1/ms'))
     # STN_LFP_GABAa_seg.analogsignals.append(STN_LFP_GABAa_signal)
-    # w = neo.io.NeoMatlabIO(filename=simulation_output_dir / "STN_LFP_GABAa.mat")
+    # w = neo.io.NeoMatlabIO(filename=str(simulation_output_dir / "STN_LFP_GABAa.mat"))
     # w.write_block(STN_LFP_GABAa_Block)
 
     # Write the DBS Signal to .mat file
@@ -678,7 +678,7 @@ if __name__ == "__main__":
     )
     DBS_Signal_seg.analogsignals.append(DBS_times)
 
-    w = neo.io.NeoMatlabIO(filename=simulation_output_dir / "DBS_Signal.mat")
+    w = neo.io.NeoMatlabIO(filename=str(simulation_output_dir / "DBS_Signal.mat"))
     w.write_block(DBS_Block)
 
     if rank == 0:
