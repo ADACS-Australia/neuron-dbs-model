@@ -6,8 +6,15 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Plot *.mat files")
 parser.add_argument("filename", help="file to plot")
-parser.add_argument("-s", "--save", action="store_true", default=False, help='save the plot')
-parser.add_argument("-o", "--output", default="plot.pdf", help="output file name (ignored unless -s is specified. Default: plot.pdf)")
+parser.add_argument(
+    "-s", "--save", action="store_true", default=False, help="save the plot"
+)
+parser.add_argument(
+    "-o",
+    "--output",
+    default="plot.pdf",
+    help="output file name (ignored unless -s is specified. Default: plot.pdf)",
+)
 args = parser.parse_args()
 
 block = NeoMatlabIO(args.filename).read_block()
