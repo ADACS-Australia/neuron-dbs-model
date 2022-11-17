@@ -4,12 +4,12 @@ import yaml
 from cerberus import Validator
 
 zero_schema = dict(
-    SetPoint={"type": "float", "coerce": float},
+    setpoint={"type": "float", "coerce": float},
     Ts={"type": "float", "coerce": float},
 )
 
 pid_schema = dict(
-    SetPoint={"type": "float", "coerce": float},
+    setpoint={"type": "float", "coerce": float},
     Kp={"type": "float", "coerce": float},
     Ti={"type": "float", "coerce": float},
     Td={"type": "float", "coerce": float},
@@ -19,7 +19,7 @@ pid_schema = dict(
 )
 
 ift_schema = dict(
-    SetPoint={"type": "float", "coerce": float},
+    setpoint={"type": "float", "coerce": float},
     Kp={"type": "float", "coerce": float},
     Ti={"type": "float", "coerce": float},
     Ts={"type": "float", "coerce": float},
@@ -51,7 +51,7 @@ class Config(object):
         TimeStep={"type": "float", "coerce": float, "default": 0.01},
         SteadyStateDuration={"type": "float", "coerce": float, "default": 6000.0},
         RunTime={"type": "float", "coerce": float, "default": 32000.0},
-        SetPoint={"type": "float", "coerce": float, "default": 0},
+        setpoint={"type": "float", "coerce": float, "default": 0},
         Kp={"type": "float", "coerce": float, "default": 0.23},
         Ti={"type": "float", "coerce": float, "default": 0.2},
         Td={"type": "float", "coerce": float, "default": 0},

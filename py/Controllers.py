@@ -19,24 +19,26 @@ rank = MPI.COMM_WORLD.Get_rank()
 
 
 class ZeroController:
-    """Dummy controller with no stimulation"""
+    """
+    Dummy controller with no stimulation
+    Template for all other controllers
+    """
 
-    def __init__(self, SetPoint=0.0, Ts=0.02):
-
-        self.SetPoint = SetPoint
+    def __init__(self, setpoint=0.0, Ts=0.02):
+        # Initial Controller Values
+        self.setpoint = setpoint
         self.label = "ZeroController"
+        self.Ts = Ts  # should be in sec
 
-        self.Ts = Ts
         self.current_time = 0.0  # (sec)
         self.last_time = 0.0
-
-        # Initialize controller terms
         self.last_error = 0.0
         self.last_OutputValue = 0.0
 
         # Initialize the output value of the controller
         self.OutputValue = 0.0
 
+        # Lists for tracking controller history
         self.state_history = []
         self.error_history = []
         self.output_history = []
@@ -57,12 +59,12 @@ class ZeroController:
     def update(self, state_value, current_time):
         """Update controller state"""
 
-        # Calculate Error - if SetPoint > 0.0, then normalize error with
+        # Calculate Error - if setpoint > 0.0, then normalize error with
         # respect to set point
-        if self.SetPoint == 0.0:
-            error = state_value - self.SetPoint
+        if self.setpoint == 0.0:
+            error = state_value - self.setpoint
         else:
-            error = (state_value - self.SetPoint) / self.SetPoint
+            error = (state_value - self.setpoint) / self.setpoint
 
         # Converting from msec to sec
         self.current_time = current_time / 1000.0
@@ -144,7 +146,7 @@ class ZeroController:
 
     def setSetPoint(self, set_point):
         """Set target set point value"""
-        self.SetPoint = set_point
+        self.setpoint = set_point
 
     def get_state_history(self):
         return self.state_history
@@ -167,7 +169,7 @@ class ConstantController:
 
     def __init__(
         self,
-        SetPoint=0.0,
+        setpoint=0.0,
         MinValue=0.0,
         MaxValue=1e9,
         ConstantValue=0.0,
@@ -175,7 +177,7 @@ class ConstantController:
         units="mA",
     ):
         # Initial Controller Values
-        self.SetPoint = SetPoint
+        self.setpoint = setpoint
         self.MaxValue = MaxValue
         self.MinValue = MinValue
         self.ConstantValue = ConstantValue
@@ -209,12 +211,12 @@ class ConstantController:
 
         """
 
-        # Calculate Error - if SetPoint > 0.0
+        # Calculate Error - if setpoint > 0.0
         # normalize error with respect to set point
-        if self.SetPoint == 0.0:
-            error = state_value - self.SetPoint
+        if self.setpoint == 0.0:
+            error = state_value - self.setpoint
         else:
-            error = (state_value - self.SetPoint) / self.SetPoint
+            error = (state_value - self.setpoint) / self.setpoint
 
         # Bound the controller output (between MinValue - MaxValue)
         if self.ConstantValue > self.MaxValue:
@@ -254,7 +256,7 @@ class ConstantController:
         self.label = label
 
     def setSetPoint(self, set_point):
-        self.SetPoint = set_point
+        self.setpoint = set_point
 
     def get_state_history(self):
         return self.state_history
@@ -276,10 +278,10 @@ class OnOffController:
     """On-Off Controller Class"""
 
     def __init__(
-        self, SetPoint=0.0, MinValue=0.0, MaxValue=1e9, RampDuration=0.25, Ts=0.02
+        self, setpoint=0.0, MinValue=0.0, MaxValue=1e9, RampDuration=0.25, Ts=0.02
     ):
         # Initial Controller Values
-        self.SetPoint = SetPoint
+        self.setpoint = setpoint
         self.MaxValue = MaxValue
         self.MinValue = MinValue
         # should be defined in sec, i.e. 0.25 sec
@@ -322,18 +324,18 @@ class OnOffController:
 
         where:
 
-        u(t) = MaxValue / (RampDuration/Ts) if e(t) > SetPoint
-        or -MaxValue / (RampDuration/Ts) if e(t) < SetPoint
+        u(t) = MaxValue / (RampDuration/Ts) if e(t) > setpoint
+        or -MaxValue / (RampDuration/Ts) if e(t) < setpoint
 
         """
 
-        # Calculate Error - if SetPoint > 0.0
+        # Calculate Error - if setpoint > 0.0
         # normalize error withrespect to set point
-        if self.SetPoint == 0.0:
-            error = state_value - self.SetPoint
+        if self.setpoint == 0.0:
+            error = state_value - self.setpoint
             increment = 0.0
         else:
-            error = (state_value - self.SetPoint) / self.SetPoint
+            error = (state_value - self.setpoint) / self.setpoint
             if error > 0.0:
                 increment = self.OutputValueIncrement
             else:
@@ -391,7 +393,7 @@ class OnOffController:
         self.label = label
 
     def setSetPoint(self, set_point):
-        self.SetPoint = set_point
+        self.setpoint = set_point
 
     def get_state_history(self):
         return self.state_history
@@ -572,10 +574,10 @@ class StandardPIDController:
     """Standard PID Controller Class"""
 
     def __init__(
-        self, SetPoint=0.0, Kp=0.0, Ti=0.0, Td=0.0, Ts=0.02, MinValue=0.0, MaxValue=1e9
+        self, setpoint=0.0, Kp=0.0, Ti=0.0, Td=0.0, Ts=0.02, MinValue=0.0, MaxValue=1e9
     ):
 
-        self.SetPoint = SetPoint
+        self.setpoint = setpoint
         self.Kp = Kp
         self.Ti = Ti
         self.Td = Td
@@ -633,12 +635,12 @@ class StandardPIDController:
 
         """
 
-        # Calculate Error - if SetPoint > 0.0, then normalize error with
+        # Calculate Error - if setpoint > 0.0, then normalize error with
         # respect to set point
-        if self.SetPoint == 0.0:
-            error = state_value - self.SetPoint
+        if self.setpoint == 0.0:
+            error = state_value - self.setpoint
         else:
-            error = (state_value - self.SetPoint) / self.SetPoint
+            error = (state_value - self.setpoint) / self.setpoint
 
         # Converting from msec to sec
         self.current_time = current_time / 1000.0
@@ -777,7 +779,7 @@ class StandardPIDController:
 
     def setSetPoint(self, set_point):
         """Set target set point value"""
-        self.SetPoint = set_point
+        self.setpoint = set_point
 
     def setMaxValue(self, max_value):
         """Sets the upper bound for the controller output"""
@@ -807,7 +809,7 @@ class IterativeFeedbackTuningPIController:
     def __init__(
         self,
         stage_length,
-        SetPoint=0.0,
+        setpoint=0.0,
         Kp=0.0,
         Ti=0.0,
         Ts=0.02,
@@ -819,7 +821,7 @@ class IterativeFeedbackTuningPIController:
         min_ti=0,
     ):
 
-        self.setpoint = SetPoint
+        self.setpoint = setpoint
         self.stage_length = stage_length
         self.stage_length_samples = int(np.ceil(stage_length / Ts)) + 1
         self.kp = Kp

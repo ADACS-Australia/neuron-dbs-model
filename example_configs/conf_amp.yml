@@ -5,7 +5,7 @@ Modulation: amplitude
 RunTime: 32000.0
 
 # Controller
-SetPoint: 1.0414e-04
+setpoint: 1.0414e-04
 Kp: 0.23
 Ti: 0.2
 Td: 0
