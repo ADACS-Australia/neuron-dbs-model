@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 from pyNN import space
@@ -29,7 +30,7 @@ BURSTS_DIR = DATA_DIR / "bursts"
 CONNECTIONS_DIR = DATA_DIR / "connections"
 
 
-def load_network(
+def get_network(
     steady_state_duration,
     simulation_duration,
     simulation_runtime,
@@ -65,55 +66,57 @@ def load_network(
         striatal_spike_times[i][0] = Sequence(spike_times)
 
     # Generate the cortico-basal ganglia neuron populations
-    Cortical_Pop = Population(
-        Pop_size,
-        Cortical_Neuron_Type(soma_bias_current_amp=0.245),
-        structure=STN_space,
-        label="Cortical Neurons",
-    )
-    Interneuron_Pop = Population(
-        Pop_size,
-        Interneuron_Type(bias_current_amp=0.070),
-        initial_values={"v": v_init},
-        label="Interneurons",
-    )
-    STN_Pop = Population(
-        Pop_size,
-        STN_Neuron_Type(bias_current=-0.125),
-        structure=STN_space,
-        initial_values={"v": v_init},
-        label="STN Neurons",
-    )
-    # GPe/i have the same parameters, but different bias currents
-    GPe_Pop = Population(
-        Pop_size,
-        GP_Neuron_Type(bias_current=-0.009),
-        initial_values={"v": v_init},
-        label="GPe Neurons",
-    )
-    GPi_Pop = Population(
-        Pop_size,
-        GP_Neuron_Type(bias_current=0.006),
-        initial_values={"v": v_init},
-        label="GPi Neurons",
-    )
-    Striatal_Pop = Population(
-        Pop_size,
-        SpikeSourceArray(spike_times=striatal_spike_times[0][0]),
-        label="Striatal Neuron Spike Source",
-    )
-    Thalamic_Pop = Population(
-        Pop_size,
-        Thalamic_Neuron_Type(),
-        initial_values={"v": v_init},
-        label="Thalamic Neurons",
+    populations = SimpleNamespace(
+        Cortical=Population(
+            Pop_size,
+            Cortical_Neuron_Type(soma_bias_current_amp=0.245),
+            structure=STN_space,
+            label="Cortical Neurons",
+        ),
+        Interneuron=Population(
+            Pop_size,
+            Interneuron_Type(bias_current_amp=0.070),
+            initial_values={"v": v_init},
+            label="Interneurons",
+        ),
+        STN=Population(
+            Pop_size,
+            STN_Neuron_Type(bias_current=-0.125),
+            structure=STN_space,
+            initial_values={"v": v_init},
+            label="STN Neurons",
+        ),
+        # GPe/i have the same parameters, but different bias currents
+        GPe=Population(
+            Pop_size,
+            GP_Neuron_Type(bias_current=-0.009),
+            initial_values={"v": v_init},
+            label="GPe Neurons",
+        ),
+        GPi=Population(
+            Pop_size,
+            GP_Neuron_Type(bias_current=0.006),
+            initial_values={"v": v_init},
+            label="GPi Neurons",
+        ),
+        Striatal=Population(
+            Pop_size,
+            SpikeSourceArray(spike_times=striatal_spike_times[0][0]),
+            label="Striatal Neuron Spike Source",
+        ),
+        Thalamic=Population(
+            Pop_size,
+            Thalamic_Neuron_Type(),
+            initial_values={"v": v_init},
+            label="Thalamic Neurons",
+        ),
     )
 
-    Striatal_Pop.set(spike_times=striatal_spike_times[:, 0])
+    populations.Striatal.set(spike_times=striatal_spike_times[:, 0])
 
     # Generate Noisy current sources for cortical pyramidal and interneuron populations
     # Inject each membrane noise current into each cortical and interneuron in network
-    for cell in Cortical_Pop:
+    for cell in populations.Cortical:
         cell.inject(
             NoisyCurrentSource(
                 mean=0,
@@ -124,7 +127,7 @@ def load_network(
             )
         )
 
-    for cell in Interneuron_Pop:
+    for cell in populations.Interneuron:
         cell.inject(
             NoisyCurrentSource(
                 mean=0,
@@ -141,7 +144,7 @@ def load_network(
     cortical_modulation_current = StepCurrentSource(
         times=modulation_t, amplitudes=modulation_s
     )
-    Cortical_Pop.inject(cortical_modulation_current)
+    populations.Cortical.inject(cortical_modulation_current)
 
     cortical_xy_pos_file = DATA_DIR / "cortical_xy_pos.txt"
     STN_Neuron_xy_Positions_file = DATA_DIR / "STN_xy_pos.txt"
@@ -150,7 +153,7 @@ def load_network(
         # 1) Make sure cells are bounded in 4mm space in x, y coordinates
         # 2) Make sure no cells are placed inside the stimulating/recording
         # electrode -0.5mm<x<0.5mm, -1.5mm<y<2mm
-        for Cortical_cell in Cortical_Pop:
+        for Cortical_cell in populations.Cortical:
             x = Cortical_cell.position[0]
             y = Cortical_cell.position[1]
             while ((np.abs(x) > 2000) or (np.abs(y) > 2000)) or (
@@ -159,9 +162,9 @@ def load_network(
                 Cortical_cell.position = STN_space.generate_positions(1).flatten()
 
         # Save the generated cortical xy positions to a textfile
-        np.savetxt(cortical_xy_pos_file, Cortical_Pop.positions, delimiter=",")
+        np.savetxt(cortical_xy_pos_file, populations.Cortical.positions, delimiter=",")
 
-        for STN_cell in STN_Pop:
+        for STN_cell in populations.STN:
             x = STN_cell.position[0]
             y = STN_cell.position[1]
             while ((np.abs(x) > 2000) or ((np.abs(y) > 2000))) or (
@@ -170,13 +173,15 @@ def load_network(
                 STN_cell.position = STN_space.generate_positions(1).flatten()
 
         # Save the generated STN xy positions to a textfile
-        np.savetxt(STN_Neuron_xy_Positions_file, STN_Pop.positions, delimiter=",")
+        np.savetxt(
+            STN_Neuron_xy_Positions_file, populations.STN.positions, delimiter=","
+        )
     else:
         # Load cortical positions - Comment/Remove to generate new positions
         Cortical_Neuron_xy_Positions = np.loadtxt(cortical_xy_pos_file, delimiter=",")
 
         # Set cortical xy positions to those loaded in
-        for ii, cell in enumerate(Cortical_Pop):
+        for ii, cell in enumerate(populations.Cortical):
             cell.position[:2] = Cortical_Neuron_xy_Positions[:2, ii]
 
         # Load STN positions - Comment/Remove to generate new positions
@@ -185,7 +190,7 @@ def load_network(
         )
 
         # Set STN xy positions to those loaded in
-        for ii, cell in enumerate(STN_Pop):
+        for ii, cell in enumerate(populations.STN):
             cell.position[:2] = STN_Neuron_xy_Positions[:2, ii]
             cell.position[2] = 500
 
@@ -218,7 +223,7 @@ def load_network(
 
     if create:
         # Create new network topology Connections
-        connections = dict(
+        connections = SimpleNamespace(
             CorticalAxonInterneuron=FixedNumberPreConnector(
                 n=10, allow_self_connections=False
             ),
@@ -243,148 +248,145 @@ def load_network(
     else:
         # Load network topology from file
         keys = [
-                "CorticalAxonInterneuron"
-                "CorticalSTN"
-                "CorticalSomaThalamic"
-                "GPeGPe"
-                "GPeGPi"
-                "GPeSTN"
-                "GPiThalamic"
-                "InterneuronCortical"
-                "STNGPe"
-                "STNGPi"
-                "StriatalGPe"
-                "ThalamicCorticalSoma"
-            ]
-        connections = {}
+            "CorticalAxonInterneuron",
+            "CorticalSTN",
+            "CorticalSomaThalamic",
+            "GPeGPe",
+            "GPeGPi",
+            "GPeSTN",
+            "GPiThalamic",
+            "InterneuronCortical",
+            "STNGPe",
+            "STNGPi",
+            "StriatalGPe",
+            "ThalamicCorticalSoma",
+        ]
+        connections = SimpleNamespace()
         for key in keys:
-            connections[key] = FromFileConnector(str(CONNECTIONS_DIR / f"{key}_Connections.txt"))
+            value = FromFileConnector(str(CONNECTIONS_DIR / f"{key}_Connections.txt"))
+            setattr(connections, key, value)
+            # print("setattr", key, value)
 
-    prj_CorticalAxon_Interneuron = Projection(
-        Cortical_Pop,
-        Interneuron_Pop,
-        connections["CorticalAxonInterneuron_Connections.txt"],
-        syn_CorticalAxon_Interneuron,
-        source="middle_axon_node",
-        receptor_type="AMPA",
-    )
-    prj_Interneuron_CorticalSoma = Projection(
-        Interneuron_Pop,
-        Cortical_Pop,
-        connections["InterneuronCortical_Connections.txt"],
-        syn_Interneuron_CorticalSoma,
-        receptor_type="GABAa",
-    )
-    prj_CorticalSTN = Projection(
-        Cortical_Pop,
-        STN_Pop,
-        connections["CorticalSTN_Connections.txt"],
-        syn_CorticalCollateralSTN,
-        source="collateral(0.5)",
-        receptor_type="AMPA",
-    )
-    prj_STNGPe = Projection(
-        STN_Pop,
-        GPe_Pop,
-        connections["STNGPe_Connections.txt"],
-        syn_STNGPe,
-        source="soma(0.5)",
-        receptor_type="AMPA",
-    )
-    prj_GPeGPe = Projection(
-        GPe_Pop,
-        GPe_Pop,
-        connections["GPeGPe_Connections.txt"],
-        syn_GPeGPe,
-        source="soma(0.5)",
-        receptor_type="GABAa",
-    )
-    prj_GPeSTN = Projection(
-        GPe_Pop,
-        STN_Pop,
-        connections["GPeSTN_Connections.txt"],
-        syn_GPeSTN,
-        source="soma(0.5)",
-        receptor_type="GABAa",
-    )
-    prj_StriatalGPe = Projection(
-        Striatal_Pop,
-        GPe_Pop,
-        connections["StriatalGPe_Connections.txt"],
-        syn_StriatalGPe,
-        source="soma(0.5)",
-        receptor_type="GABAa",
-    )
-    prj_STNGPi = Projection(
-        STN_Pop,
-        GPi_Pop,
-        connections["STNGPi_Connections.txt"],
-        syn_STNGPi,
-        source="soma(0.5)",
-        receptor_type="AMPA",
-    )
-    prj_GPeGPi = Projection(
-        GPe_Pop,
-        GPi_Pop,
-        connections["GPeGPi_Connections.txt"],
-        syn_GPeGPi,
-        source="soma(0.5)",
-        receptor_type="GABAa",
-    )
-    prj_GPiThalamic = Projection(
-        GPi_Pop,
-        Thalamic_Pop,
-        connections["GPiThalamic_Connections.txt"],
-        syn_GPiThalamic,
-        source="soma(0.5)",
-        receptor_type="GABAa",
-    )
-    prj_ThalamicCortical = Projection(
-        Thalamic_Pop,
-        Cortical_Pop,
-        connections["ThalamicCorticalSoma_Connections.txt"],
-        syn_ThalamicCortical,
-        source="soma(0.5)",
-        receptor_type="AMPA",
-    )
-    prj_CorticalThalamic = Projection(
-        Cortical_Pop,
-        Thalamic_Pop,
-        connections["CorticalSomaThalamic_Connections.txt"],
-        syn_CorticalThalamic,
-        source="soma(0.5)",
-        receptor_type="AMPA",
+    projections = SimpleNamespace(
+        CorticalAxon_Interneuron=Projection(
+            populations.Cortical,
+            populations.Interneuron,
+            connections.CorticalAxonInterneuron,
+            syn_CorticalAxon_Interneuron,
+            source="middle_axon_node",
+            receptor_type="AMPA",
+        ),
+        Interneuron_CorticalSoma=Projection(
+            populations.Interneuron,
+            populations.Cortical,
+            connections.InterneuronCortical,
+            syn_Interneuron_CorticalSoma,
+            receptor_type="GABAa",
+        ),
+        CorticalSTN=Projection(
+            populations.Cortical,
+            populations.STN,
+            connections.CorticalSTN,
+            syn_CorticalCollateralSTN,
+            source="collateral(0.5)",
+            receptor_type="AMPA",
+        ),
+        STNGPe=Projection(
+            populations.STN,
+            populations.GPe,
+            connections.STNGPe,
+            syn_STNGPe,
+            source="soma(0.5)",
+            receptor_type="AMPA",
+        ),
+        GPeGPe=Projection(
+            populations.GPe,
+            populations.GPe,
+            connections.GPeGPe,
+            syn_GPeGPe,
+            source="soma(0.5)",
+            receptor_type="GABAa",
+        ),
+        GPeSTN=Projection(
+            populations.GPe,
+            populations.STN,
+            connections.GPeSTN,
+            syn_GPeSTN,
+            source="soma(0.5)",
+            receptor_type="GABAa",
+        ),
+        StriatalGPe=Projection(
+            populations.Striatal,
+            populations.GPe,
+            connections.StriatalGPe,
+            syn_StriatalGPe,
+            source="soma(0.5)",
+            receptor_type="GABAa",
+        ),
+        STNGPi=Projection(
+            populations.STN,
+            populations.GPi,
+            connections.STNGPi,
+            syn_STNGPi,
+            source="soma(0.5)",
+            receptor_type="AMPA",
+        ),
+        GPeGPi=Projection(
+            populations.GPe,
+            populations.GPi,
+            connections.GPeGPi,
+            syn_GPeGPi,
+            source="soma(0.5)",
+            receptor_type="GABAa",
+        ),
+        GPiThalamic=Projection(
+            populations.GPi,
+            populations.Thalamic,
+            connections.GPiThalamic,
+            syn_GPiThalamic,
+            source="soma(0.5)",
+            receptor_type="GABAa",
+        ),
+        ThalamicCortical=Projection(
+            populations.Thalamic,
+            populations.Cortical,
+            connections.ThalamicCorticalSoma,
+            syn_ThalamicCortical,
+            source="soma(0.5)",
+            receptor_type="AMPA",
+        ),
+        CorticalThalamic=Projection(
+            populations.Cortical,
+            populations.Thalamic,
+            connections.CorticalSomaThalamic,
+            syn_CorticalThalamic,
+            source="soma(0.5)",
+            receptor_type="AMPA",
+        ),
     )
 
     if create:
         # Save the network topology so it can be reloaded
-        # prj_CorticalSpikeSourceCorticalSoma.saveConnections(file="CorticalSpikeSourceCorticalSoma_Connections.txt")
-        prj_CorticalAxon_Interneuron.saveConnections(
-            file=str(CONNECTIONS_DIR / "CorticalAxonInterneuron_Connections.txt")
-        )
-        prj_Interneuron_CorticalSoma.saveConnections(
-            file=str(CONNECTIONS_DIR / "InterneuronCortical_Connections.txt")
-        )
-        prj_CorticalSTN.saveConnections(
-            file=str(CONNECTIONS_DIR / "CorticalSTN_Connections.txt")
-        )
-        prj_STNGPe.saveConnections(file=str(CONNECTIONS_DIR / "STNGPe_Connections.txt"))
-        prj_GPeGPe.saveConnections(file=str(CONNECTIONS_DIR / "GPeGPe_Connections.txt"))
-        prj_GPeSTN.saveConnections(file=str(CONNECTIONS_DIR / "GPeSTN_Connections.txt"))
-        prj_StriatalGPe.saveConnections(
-            file=str(CONNECTIONS_DIR / "StriatalGPe_Connections.txt")
-        )
-        prj_STNGPi.saveConnections(file=str(CONNECTIONS_DIR / "STNGPi_Connections.txt"))
-        prj_GPeGPi.saveConnections(file=str(CONNECTIONS_DIR / "GPeGPi_Connections.txt"))
-        prj_GPiThalamic.saveConnections(
-            file=str(CONNECTIONS_DIR / "GPiThalamic_Connections.txt")
-        )
-        prj_ThalamicCortical.saveConnections(
-            file=str(CONNECTIONS_DIR / "ThalamicCorticalSoma_Connections.txt")
-        )
-        prj_CorticalThalamic.saveConnections(
-            file=str(CONNECTIONS_DIR / "CorticalSomaThalamic_Connections.txt")
-        )
+        # CorticalSpikeSourceCorticalSoma.saveConnections(file="CorticalSpikeSourceCorticalSoma_Connections.txt")
+        keys = [
+            "CorticalAxon_Interneuron",
+            "Interneuron_CorticalSoma",
+            "CorticalSTN",
+            "STNGPe",
+            "GPeGPe",
+            "GPeSTN",
+            "StriatalGPe",
+            "STNGPi",
+            "GPeGPi",
+            "GPiThalamic",
+            "ThalamicCortical",
+            "CorticalThalamic",
+        ]
+        for key in keys:
+            projection = getattr(projections, key)
+            projection.saveConnections(
+                file=str(CONNECTIONS_DIR / f"{key}_Connections.txt")
+            )
 
     # Load GPe stimulation order
     GPe_stimulation_order = np.loadtxt(
@@ -395,24 +397,7 @@ def load_network(
     return (
         Pop_size,
         striatal_spike_times,
-        Cortical_Pop,
-        Interneuron_Pop,
-        STN_Pop,
-        GPe_Pop,
-        GPi_Pop,
-        Striatal_Pop,
-        Thalamic_Pop,
-        prj_CorticalAxon_Interneuron,
-        prj_Interneuron_CorticalSoma,
-        prj_CorticalSTN,
-        prj_STNGPe,
-        prj_GPeGPe,
-        prj_GPeSTN,
-        prj_StriatalGPe,
-        prj_STNGPi,
-        prj_GPeGPi,
-        prj_GPiThalamic,
-        prj_ThalamicCortical,
-        prj_CorticalThalamic,
+        populations,
+        projections,
         GPe_stimulation_order,
     )

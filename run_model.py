@@ -41,7 +41,7 @@ import numpy as np
 import math
 import argparse
 from py.utils import make_beta_cheby1_filter, calculate_avg_beta_power
-from py.network import load_network
+from py.network import get_network
 from py.Electrode_Distances import electrode_distance
 from py.config import Config, get_controller_kwargs
 
@@ -103,36 +103,31 @@ if __name__ == "__main__":
 
     if rank == 0:
         print("Loading network...")
+
     (
         Pop_size,
         striatal_spike_times,
-        Cortical_Pop,
-        Interneuron_Pop,
-        STN_Pop,
-        GPe_Pop,
-        GPi_Pop,
-        Striatal_Pop,
-        Thalamic_Pop,
-        prj_CorticalAxon_Interneuron,
-        prj_Interneuron_CorticalSoma,
-        prj_CorticalSTN,
-        prj_STNGPe,
-        prj_GPeGPe,
-        prj_GPeSTN,
-        prj_StriatalGPe,
-        prj_STNGPi,
-        prj_GPeGPi,
-        prj_GPiThalamic,
-        prj_ThalamicCortical,
-        prj_CorticalThalamic,
+        populations,
+        projections,
         GPe_stimulation_order,
-    ) = load_network(
+    ) = get_network(
         steady_state_duration,
         sim_total_time,
         simulation_runtime,
         v_init,
         rng_seed,
     )
+
+    # unpack populations
+    Cortical_Pop = populations.Cortical
+    Interneuron_Pop = populations.Interneuron
+    STN_Pop = populations.STN
+    Striatal_Pop = populations.Striatal
+    GPe_Pop = populations.GPe
+    GPi_Pop = populations.GPi
+    Thalamic_Pop = populations.Thalamic
+    del populations
+
     if rank == 0:
         print("Network loaded.")
 
