@@ -461,23 +461,17 @@ def load_network(
     Cortical_Neuron_xy_Positions = np.loadtxt(
         DATA_DIR / "cortical_xy_pos.txt", delimiter=","
     )
-    Cortical_Neuron_x_Positions = Cortical_Neuron_xy_Positions[0, :]
-    Cortical_Neuron_y_Positions = Cortical_Neuron_xy_Positions[1, :]
 
     # Set cortical xy positions to those loaded in
     for ii, cell in enumerate(Cortical_Pop):
-        cell.position[0] = Cortical_Neuron_x_Positions[ii]
-        cell.position[1] = Cortical_Neuron_y_Positions[ii]
+        cell.position[:2] = Cortical_Neuron_xy_Positions[:2, ii]
 
     # Load STN positions - Comment/Remove to generate new positions
     STN_Neuron_xy_Positions = np.loadtxt(DATA_DIR / "STN_xy_pos.txt", delimiter=",")
-    STN_Neuron_x_Positions = STN_Neuron_xy_Positions[0, :]
-    STN_Neuron_y_Positions = STN_Neuron_xy_Positions[1, :]
 
     # Set STN xy positions to those loaded in
     for ii, cell in enumerate(STN_Pop):
-        cell.position[0] = STN_Neuron_x_Positions[ii]
-        cell.position[1] = STN_Neuron_y_Positions[ii]
+        cell.position[:2] = STN_Neuron_xy_Positions[:2, ii]
         cell.position[2] = 500
 
     # Synaptic Connections
