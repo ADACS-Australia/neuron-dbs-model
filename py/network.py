@@ -104,17 +104,6 @@ def create_network(
 
     Striatal_Pop.set(spike_times=striatal_spike_times[:, 0])
 
-    # Load burst times
-    burst_times_script = BURSTS / "burst_times_1.txt"
-    burst_level_script = BURSTS / "burst_level_1.txt"
-    modulation_t = np.loadtxt(burst_times_script, delimiter=",")
-    modulation_s = np.loadtxt(burst_level_script, delimiter=",")
-    modulation_s = 0.02 * modulation_s  # Scale the modulation signal
-    cortical_modulation_current = StepCurrentSource(
-        times=modulation_t, amplitudes=modulation_s
-    )
-    Cortical_Pop.inject(cortical_modulation_current)
-
     # Generate Noisy current sources for cortical pyramidal and interneuron populations
     # Inject each membrane noise current into each cortical and interneuron in network
     for cell in Cortical_Pop:
@@ -138,6 +127,17 @@ def create_network(
                 dt=1.0,
             )
         )
+
+    # Load burst times
+    burst_times_script = BURSTS / "burst_times_1.txt"
+    burst_level_script = BURSTS / "burst_level_1.txt"
+    modulation_t = np.loadtxt(burst_times_script, delimiter=",")
+    modulation_s = np.loadtxt(burst_level_script, delimiter=",")
+    modulation_s = 0.02 * modulation_s  # Scale the modulation signal
+    cortical_modulation_current = StepCurrentSource(
+        times=modulation_t, amplitudes=modulation_s
+    )
+    Cortical_Pop.inject(cortical_modulation_current)
 
     # Position Check -
     # 1) Make sure cells are bounded in 4mm space in x, y coordinates
