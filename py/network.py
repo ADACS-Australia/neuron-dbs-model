@@ -25,8 +25,8 @@ from .Cortical_Basal_Ganglia_Cell_Classes import (
 from .utils import generate_poisson_spike_times
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
-BURSTS = DATA_DIR / "bursts"
-CONNECTIONS = DATA_DIR / "connections"
+BURSTS_DIR = DATA_DIR / "bursts"
+CONNECTIONS_DIR = DATA_DIR / "connections"
 
 
 def create_network(
@@ -129,8 +129,8 @@ def create_network(
         )
 
     # Load burst times
-    burst_times_script = BURSTS / "burst_times_1.txt"
-    burst_level_script = BURSTS / "burst_level_1.txt"
+    burst_times_script = BURSTS_DIR / "burst_times_1.txt"
+    burst_level_script = BURSTS_DIR / "burst_level_1.txt"
     modulation_t = np.loadtxt(burst_times_script, delimiter=",")
     modulation_s = np.loadtxt(burst_level_script, delimiter=",")
     modulation_s = 0.02 * modulation_s  # Scale the modulation signal
@@ -292,30 +292,30 @@ def create_network(
     # Save the network topology so it can be reloaded
     # prj_CorticalSpikeSourceCorticalSoma.saveConnections(file="CorticalSpikeSourceCorticalSoma_Connections.txt")
     prj_CorticalAxon_Interneuron.saveConnections(
-        file=str(CONNECTIONS / "CorticalAxonInterneuron_Connections.txt")
+        file=str(CONNECTIONS_DIR / "CorticalAxonInterneuron_Connections.txt")
     )
     prj_Interneuron_CorticalSoma.saveConnections(
-        file=str(CONNECTIONS / "InterneuronCortical_Connections.txt")
+        file=str(CONNECTIONS_DIR / "InterneuronCortical_Connections.txt")
     )
     prj_CorticalSTN.saveConnections(
-        file=str(CONNECTIONS / "CorticalSTN_Connections.txt")
+        file=str(CONNECTIONS_DIR / "CorticalSTN_Connections.txt")
     )
-    prj_STNGPe.saveConnections(file=str(CONNECTIONS / "STNGPe_Connections.txt"))
-    prj_GPeGPe.saveConnections(file=str(CONNECTIONS / "GPeGPe_Connections.txt"))
-    prj_GPeSTN.saveConnections(file=str(CONNECTIONS / "GPeSTN_Connections.txt"))
+    prj_STNGPe.saveConnections(file=str(CONNECTIONS_DIR / "STNGPe_Connections.txt"))
+    prj_GPeGPe.saveConnections(file=str(CONNECTIONS_DIR / "GPeGPe_Connections.txt"))
+    prj_GPeSTN.saveConnections(file=str(CONNECTIONS_DIR / "GPeSTN_Connections.txt"))
     prj_StriatalGPe.saveConnections(
-        file=str(CONNECTIONS / "StriatalGPe_Connections.txt")
+        file=str(CONNECTIONS_DIR / "StriatalGPe_Connections.txt")
     )
-    prj_STNGPi.saveConnections(file=str(CONNECTIONS / "STNGPi_Connections.txt"))
-    prj_GPeGPi.saveConnections(file=str(CONNECTIONS / "GPeGPi_Connections.txt"))
+    prj_STNGPi.saveConnections(file=str(CONNECTIONS_DIR / "STNGPi_Connections.txt"))
+    prj_GPeGPi.saveConnections(file=str(CONNECTIONS_DIR / "GPeGPi_Connections.txt"))
     prj_GPiThalamic.saveConnections(
-        file=str(CONNECTIONS / "GPiThalamic_Connections.txt")
+        file=str(CONNECTIONS_DIR / "GPiThalamic_Connections.txt")
     )
     prj_ThalamicCortical.saveConnections(
-        file=str(CONNECTIONS / "ThalamicCorticalSoma_Connections.txt")
+        file=str(CONNECTIONS_DIR / "ThalamicCorticalSoma_Connections.txt")
     )
     prj_CorticalThalamic.saveConnections(
-        file=str(CONNECTIONS / "CorticalSomaThalamic_Connections.txt")
+        file=str(CONNECTIONS_DIR / "CorticalSomaThalamic_Connections.txt")
     )
     # Load GPe stimulation order
     GPe_stimulation_order = np.loadtxt(
@@ -443,8 +443,8 @@ def load_network(
         )
 
     # Load burst times
-    burst_times_script = BURSTS / "burst_times_1.txt"
-    burst_level_script = BURSTS / "burst_level_1.txt"
+    burst_times_script = BURSTS_DIR / "burst_times_1.txt"
+    burst_level_script = BURSTS_DIR / "burst_level_1.txt"
     modulation_t = np.loadtxt(burst_times_script, delimiter=",")
     modulation_s = np.loadtxt(burst_level_script, delimiter=",")
     modulation_s = 0.02 * modulation_s  # Scale the modulation signal
@@ -501,7 +501,9 @@ def load_network(
     prj_CorticalAxon_Interneuron = Projection(
         Cortical_Pop,
         Interneuron_Pop,
-        FromFileConnector(str(CONNECTIONS / "CorticalAxonInterneuron_Connections.txt")),
+        FromFileConnector(
+            str(CONNECTIONS_DIR / "CorticalAxonInterneuron_Connections.txt")
+        ),
         syn_CorticalAxon_Interneuron,
         source="middle_axon_node",
         receptor_type="AMPA",
@@ -509,14 +511,14 @@ def load_network(
     prj_Interneuron_CorticalSoma = Projection(
         Interneuron_Pop,
         Cortical_Pop,
-        FromFileConnector(str(CONNECTIONS / "InterneuronCortical_Connections.txt")),
+        FromFileConnector(str(CONNECTIONS_DIR / "InterneuronCortical_Connections.txt")),
         syn_Interneuron_CorticalSoma,
         receptor_type="GABAa",
     )
     prj_CorticalSTN = Projection(
         Cortical_Pop,
         STN_Pop,
-        FromFileConnector(str(CONNECTIONS / "CorticalSTN_Connections.txt")),
+        FromFileConnector(str(CONNECTIONS_DIR / "CorticalSTN_Connections.txt")),
         syn_CorticalCollateralSTN,
         source="collateral(0.5)",
         receptor_type="AMPA",
@@ -524,7 +526,7 @@ def load_network(
     prj_STNGPe = Projection(
         STN_Pop,
         GPe_Pop,
-        FromFileConnector(str(CONNECTIONS / "STNGPe_Connections.txt")),
+        FromFileConnector(str(CONNECTIONS_DIR / "STNGPe_Connections.txt")),
         syn_STNGPe,
         source="soma(0.5)",
         receptor_type="AMPA",
@@ -532,7 +534,7 @@ def load_network(
     prj_GPeGPe = Projection(
         GPe_Pop,
         GPe_Pop,
-        FromFileConnector(str(CONNECTIONS / "GPeGPe_Connections.txt")),
+        FromFileConnector(str(CONNECTIONS_DIR / "GPeGPe_Connections.txt")),
         syn_GPeGPe,
         source="soma(0.5)",
         receptor_type="GABAa",
@@ -540,7 +542,7 @@ def load_network(
     prj_GPeSTN = Projection(
         GPe_Pop,
         STN_Pop,
-        FromFileConnector(str(CONNECTIONS / "GPeSTN_Connections.txt")),
+        FromFileConnector(str(CONNECTIONS_DIR / "GPeSTN_Connections.txt")),
         syn_GPeSTN,
         source="soma(0.5)",
         receptor_type="GABAa",
@@ -548,7 +550,7 @@ def load_network(
     prj_StriatalGPe = Projection(
         Striatal_Pop,
         GPe_Pop,
-        FromFileConnector(str(CONNECTIONS / "StriatalGPe_Connections.txt")),
+        FromFileConnector(str(CONNECTIONS_DIR / "StriatalGPe_Connections.txt")),
         syn_StriatalGPe,
         source="soma(0.5)",
         receptor_type="GABAa",
@@ -556,7 +558,7 @@ def load_network(
     prj_STNGPi = Projection(
         STN_Pop,
         GPi_Pop,
-        FromFileConnector(str(CONNECTIONS / "STNGPi_Connections.txt")),
+        FromFileConnector(str(CONNECTIONS_DIR / "STNGPi_Connections.txt")),
         syn_STNGPi,
         source="soma(0.5)",
         receptor_type="AMPA",
@@ -564,7 +566,7 @@ def load_network(
     prj_GPeGPi = Projection(
         GPe_Pop,
         GPi_Pop,
-        FromFileConnector(str(CONNECTIONS / "GPeGPi_Connections.txt")),
+        FromFileConnector(str(CONNECTIONS_DIR / "GPeGPi_Connections.txt")),
         syn_GPeGPi,
         source="soma(0.5)",
         receptor_type="GABAa",
@@ -572,7 +574,7 @@ def load_network(
     prj_GPiThalamic = Projection(
         GPi_Pop,
         Thalamic_Pop,
-        FromFileConnector(str(CONNECTIONS / "GPiThalamic_Connections.txt")),
+        FromFileConnector(str(CONNECTIONS_DIR / "GPiThalamic_Connections.txt")),
         syn_GPiThalamic,
         source="soma(0.5)",
         receptor_type="GABAa",
@@ -580,7 +582,9 @@ def load_network(
     prj_ThalamicCortical = Projection(
         Thalamic_Pop,
         Cortical_Pop,
-        FromFileConnector(str(CONNECTIONS / "ThalamicCorticalSoma_Connections.txt")),
+        FromFileConnector(
+            str(CONNECTIONS_DIR / "ThalamicCorticalSoma_Connections.txt")
+        ),
         syn_ThalamicCortical,
         source="soma(0.5)",
         receptor_type="AMPA",
@@ -588,7 +592,9 @@ def load_network(
     prj_CorticalThalamic = Projection(
         Cortical_Pop,
         Thalamic_Pop,
-        FromFileConnector(str(CONNECTIONS / "CorticalSomaThalamic_Connections.txt")),
+        FromFileConnector(
+            str(CONNECTIONS_DIR / "CorticalSomaThalamic_Connections.txt")
+        ),
         syn_CorticalThalamic,
         source="soma(0.5)",
         receptor_type="AMPA",
