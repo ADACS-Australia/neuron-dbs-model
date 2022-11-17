@@ -211,7 +211,7 @@ if __name__ == "__main__":
         controller_call_times = np.array([controller_start])
 
     # Initialize the Controller being used:
-    # Controller sampling period, Ts, is in sec
+    # Controller sampling period, ts, is in sec
     if controller_type == "ZERO":
         Controller = ZeroController
     elif controller_type == "PID":

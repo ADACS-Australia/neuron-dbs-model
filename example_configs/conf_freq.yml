@@ -6,9 +6,9 @@ RunTime: 32000.0
 
 # Controller
 setpoint: 1.0414e-04
-Kp: 19.3
-Ti: 0.2
-Td: 0
-Ts: 0.02
-MinValue: 0.0
-MaxValue: 250.0
+kp: 19.3
+ti: 0.2
+td: 0
+ts: 0.02
+minvalue: 0.0
+maxvalue: 250.0
