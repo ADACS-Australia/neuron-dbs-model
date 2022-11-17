@@ -321,7 +321,7 @@ def create_network(
     )
     # Load GPe stimulation order
     GPe_stimulation_order = np.loadtxt(
-        CONNECTIONS / "GPe_Stimulation_Order.txt", delimiter=","
+        DATA_DIR / "GPe_Stimulation_Order.txt", delimiter=","
     )
     GPe_stimulation_order = [int(index) for index in GPe_stimulation_order]
 
