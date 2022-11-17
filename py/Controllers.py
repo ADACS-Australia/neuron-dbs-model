@@ -24,10 +24,11 @@ class ZeroController:
     Template for all other controllers
     """
 
+    label = "ZeroController"
+
     def __init__(self, setpoint=0.0, ts=0.02):
         # Initial Controller Values
         self.setpoint = setpoint
-        self.label = "ZeroController"
         self.ts = ts  # should be in sec
 
         self.current_time = 0.0  # (sec)
@@ -822,7 +823,10 @@ class StandardPIDController:
         return self.label
 
 
-class IterativeFeedbackTuningPIController:
+class IterativeFeedbackTuningPIController(ZeroController):
+
+    label = "iterative_feedback_tuning_PI_Controller"
+
     def __init__(
         self,
         stage_length,
@@ -838,7 +842,8 @@ class IterativeFeedbackTuningPIController:
         min_ti=0,
     ):
 
-        self.setpoint = setpoint
+        super().__init__(setpoint, ts)
+
         self.stage_length = stage_length
         self.stage_length_samples = int(np.ceil(stage_length / ts)) + 1
         self.kp = kp
@@ -853,45 +858,24 @@ class IterativeFeedbackTuningPIController:
         self.min_value = minvalue
         self.max_value = maxvalue
 
-        self.label = "iterative_feedback_tuning_PI_Controller"
-
-        self.ts = ts
-        self.current_time = 0.0  # (sec)
-        self.last_time = 0.0
         self.stage_start_time = 0.0
-
-        # Initialize controller terms
         self.integral_term = 0.0
-        self.last_error = 0.0
-        self.last_output_value = 0.0
-
-        # Initialize the output value of the controller
-        self.output_value = 0.0
-
         self._integral_term_history = []
-        self._state_history = []
-        self._error_history = []
-        self._output_history = []
-        self._sample_times = []
         self._iteration_history = []
         self._reference_history = []
         self._parameter_history = []
         self._recorded_output = np.zeros(self.stage_length_samples)
 
     def clear(self):
-        self.integral_term = 0.0
-        self.last_error = 0.0
+        """Clears controller variables"""
 
+        super().clear()
+
+        self.integral_term = 0.0
         self._integral_term_history = []
-        self._state_history = []
-        self._error_history = []
-        self._output_history = []
-        self._sample_times = []
         self._iteration_history = []
         self._parameter_history = []
         self._recorded_output = np.zeros(self.stage_length_samples)
-
-        self.output_value = 0.0
 
     def dc_drho(self, s):
         kp = self.kp
@@ -958,6 +942,7 @@ class IterativeFeedbackTuningPIController:
         return self._recorded_output[sample]
 
     def update(self, state_value, current_time):
+        """Update controller state"""
         self.current_time = current_time
         elapsed_time = (current_time - self.stage_start_time) / 1000
         setpoint = self.reference_signal(elapsed_time)
@@ -1028,79 +1013,8 @@ class IterativeFeedbackTuningPIController:
         self._output_history.append(self.output_value)
         self._parameter_history.append([self.kp, self.ti])
 
+        # Return controller output
         return self.output_value
-
-    def generate_dbs_signal(
-        self,
-        start_time,
-        stop_time,
-        dt,
-        amplitude,
-        frequency,
-        pulse_width,
-        offset,
-        last_pulse_time_prior=0,
-    ):
-        """Generate monophasic square-wave DBS signal
-
-        Example inputs:
-            start_time = 0                # ms
-            stop_time = 12000            # ms
-            dt = 0.01                    # ms
-            amplitude = -1.0            # mA (<0 = cathodic, >0 = anodic)
-            frequency = 130.0            # Hz
-            pulse_width    = 0.06            # ms
-            offset = 0                    # mA
-        """
-
-        times = np.round(np.arange(start_time, stop_time, dt), 2)
-        tmp = np.arange(0, stop_time - start_time, dt) / 1000.0
-
-        if frequency == 0:
-            dbs_signal = np.zeros(len(tmp))
-            last_pulse_time = last_pulse_time_prior
-            next_pulse_time = 1e9
-        else:
-            # Calculate the duty cycle of the DBS signal
-            isi = 1000.0 / frequency  # time is in ms
-            duty_cycle = pulse_width / isi
-            tt = 2.0 * np.pi * frequency * tmp
-            dbs_signal = offset + 0.5 * (1.0 + signal.square(tt, duty=duty_cycle))
-            dbs_signal[-1] = 0.0
-
-            # Calculate the time for the first pulse of the next segment
-            try:
-                last_pulse_index = np.where(np.diff(dbs_signal) < 0)[0][-1]
-                next_pulse_time = times[last_pulse_index] + isi - pulse_width
-
-                # Track when the last pulse was
-                last_pulse_time = times[last_pulse_index]
-
-            except IndexError:
-                # Catch times when signal may be flat
-                last_pulse_index = len(dbs_signal) - 1
-                next_pulse_time = times[last_pulse_index] + isi - pulse_width
-
-            # Rescale amplitude
-            dbs_signal *= amplitude
-
-        return dbs_signal, times, next_pulse_time, last_pulse_time
-
-    @property
-    def label(self):
-        return self._label
-
-    @label.setter
-    def label(self, value):
-        self._label = value
-
-    @property
-    def setpoint(self):
-        return self._setpoint
-
-    @setpoint.setter
-    def setpoint(self, value):
-        self._setpoint = value
 
     @property
     def max_value(self):
@@ -1133,23 +1047,3 @@ class IterativeFeedbackTuningPIController:
     @property
     def _error_history(self):
         return self._error_history
-
-    @property
-    def _output_history(self):
-        return self._output_history
-
-    @property
-    def _sample_times(self):
-        return self._sample_times
-
-    @property
-    def iteration_history(self):
-        return self._iteration_history
-
-    @property
-    def reference_history(self):
-        return self._reference_history
-
-    @property
-    def parameter_history(self):
-        return self._parameter_history
