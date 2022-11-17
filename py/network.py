@@ -155,12 +155,10 @@ def create_network(
     np.savetxt(DATA_DIR / "cortical_xy_pos.txt", Cortical_Pop.positions, delimiter=",")
 
     for STN_cell in STN_Pop:
-        while (
-            (np.abs(STN_cell.position[0]) > 2000)
-            or ((np.abs(STN_cell.position[1]) > 2000))
-        ) or (
-            (np.abs(STN_cell.position[0]) < 500)
-            and (-1500 < STN_cell.position[1] < 2000)
+        x = STN_cell.position[0]
+        y = STN_cell.position[1]
+        while ((np.abs(x) > 2000) or ((np.abs(y) > 2000))) or (
+            (np.abs(x) < 500) and (-1500 < y < 2000)
         ):
             STN_cell.position = STN_space.generate_positions(1).flatten()
 
