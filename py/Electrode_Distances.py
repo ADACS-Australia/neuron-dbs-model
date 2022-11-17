@@ -99,3 +99,35 @@ def collateral_distances_to_electrode(src_electrode, tgt_pop, L, nseg):
             )
 
     return segment_electrode_distances
+
+
+def electrode_distance(
+    recording_electrode_1_position,
+    recording_electrode_2_position,
+    STN_Pop,
+    stimulating_electrode_position,
+    Cortical_Pop,
+):
+    # Calculate STN cell distances to each recording electrode
+    # using only xy coordinates for distance calculations
+    STN_recording_electrode_1_distances = distances_to_electrode(
+        recording_electrode_1_position, STN_Pop
+    )
+    STN_recording_electrode_2_distances = distances_to_electrode(
+        recording_electrode_2_position, STN_Pop
+    )
+
+    # Calculate Cortical Collateral distances from the stimulating electrode -
+    # using xyz coordinates for distance
+    # calculation - these distances need to be in um for xtra mechanism
+    Cortical_Collateral_stimulating_electrode_distances = (
+        collateral_distances_to_electrode(
+            stimulating_electrode_position, Cortical_Pop, L=500, nseg=11
+        )
+    )
+
+    return (
+        STN_recording_electrode_1_distances,
+        STN_recording_electrode_2_distances,
+        Cortical_Collateral_stimulating_electrode_distances,
+    )

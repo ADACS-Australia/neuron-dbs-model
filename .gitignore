@@ -8,3 +8,5 @@ Simulation_Output_Results/
 *.q
 RESULTS_*/
 results_*/
+
+.vscode/
