@@ -162,11 +162,11 @@ class ZeroController:
         self._setpoint = value
 
     @property
-    def _output_history(self):
+    def output_history(self):
         return self._output_history
 
     @property
-    def _sample_times(self):
+    def sample_times(self):
         return self._sample_times
 
     @property
@@ -1041,9 +1041,9 @@ class IterativeFeedbackTuningPIController(ZeroController):
         return self._recorded_output
 
     @property
-    def _state_history(self):
+    def state_history(self):
         return self._state_history
 
     @property
-    def _error_history(self):
+    def error_history(self):
         return self._error_history
