@@ -33,10 +33,10 @@ class ZeroController:
         self.current_time = 0.0  # (sec)
         self.last_time = 0.0
         self.last_error = 0.0
-        self.last_OutputValue = 0.0
+        self.lastoutputvalue = 0.0
 
         # Initialize the output value of the controller
-        self.OutputValue = 0.0
+        self.outputvalue = 0.0
 
         # Lists for tracking controller history
         self.state_history = []
@@ -54,7 +54,7 @@ class ZeroController:
         self.output_history = []
         self.sample_times = []
 
-        self.OutputValue = 0.0
+        self.outputvalue = 0.0
 
     def update(self, state_value, current_time):
         """Update controller state"""
@@ -73,20 +73,20 @@ class ZeroController:
         self.last_time = self.current_time
         self.last_error = error
 
-        self.OutputValue = 0
+        self.outputvalue = 0
 
         # Update the last output value
-        self.last_OutputValue = self.OutputValue
+        self.lastoutputvalue = self.outputvalue
 
         # Record state, error, y(t), and sample time values
         self.state_history.append(state_value)
         self.error_history.append(error)
-        self.output_history.append(self.OutputValue)
+        self.output_history.append(self.outputvalue)
         # Convert from msec to sec
         self.sample_times.append(current_time / 1000)
 
         # Return controller output
-        return self.OutputValue
+        return self.outputvalue
 
     def generate_dbs_signal(
         self,
@@ -144,9 +144,9 @@ class ZeroController:
 
         return dbs_signal, times, next_pulse_time, last_pulse_time
 
-    def setSetPoint(self, set_point):
+    def setSetPoint(self, setpoint):
         """Set target set point value"""
-        self.setpoint = set_point
+        self.setpoint = setpoint
 
     def get_state_history(self):
         return self.state_history
@@ -186,7 +186,7 @@ class ConstantController:
         self.label = "Constant_Controller/%f%s" % (self.constantvalue, self.units)
 
         # Set output value
-        self.OutputValue = 0
+        self.outputvalue = 0
 
         # Lists for tracking controller history
         self.state_history = []
@@ -202,7 +202,7 @@ class ConstantController:
         self.output_history = []
         self.sample_times = []
 
-        self.OutputValue = 0.0
+        self.outputvalue = 0.0
 
     def update(self, state_value, current_time):
         """Calculates biomarker for constant DBS value
@@ -220,20 +220,20 @@ class ConstantController:
 
         # Bound the controller output (between minvalue - maxvalue)
         if self.constantvalue > self.maxvalue:
-            self.OutputValue = self.maxvalue
+            self.outputvalue = self.maxvalue
         elif self.constantvalue < self.minvalue:
-            self.OutputValue = self.minvalue
+            self.outputvalue = self.minvalue
         else:
-            self.OutputValue = self.constantvalue
+            self.outputvalue = self.constantvalue
 
         # Record state, error and sample time values
         self.state_history.append(state_value)
         self.error_history.append(error)
-        self.output_history.append(self.OutputValue)
+        self.output_history.append(self.outputvalue)
         # Convert from msec to sec
         self.sample_times.append(current_time / 1000)
 
-        return self.OutputValue
+        return self.outputvalue
 
     def setMaxValue(self, max_value):
         """Sets the upper bound for the controller output"""
@@ -255,8 +255,8 @@ class ConstantController:
         """Sets the label of the controller"""
         self.label = label
 
-    def setSetPoint(self, set_point):
-        self.setpoint = set_point
+    def setSetPoint(self, setpoint):
+        self.setpoint = setpoint
 
     def get_state_history(self):
         return self.state_history
@@ -292,13 +292,13 @@ class OnOffController:
 
         # Calculate how much controller output value will change each
         # controller call
-        self.OutputValueIncrement = (self.maxvalue - self.minvalue) / math.ceil(
+        self.outputvalueincrement = (self.maxvalue - self.minvalue) / math.ceil(
             self.rampduration / self.ts
         )
 
         # Initialize the output value of the controller
-        self.LastOutputValue = 0
-        self.OutputValue = 0
+        self.lastoutputvalue = 0
+        self.outputvalue = 0
 
         # Lists for tracking controller history
         self.state_history = []
@@ -314,8 +314,8 @@ class OnOffController:
         self.output_history = []
         self.sample_times = []
 
-        self.LastOutputValue = 0.0
-        self.OutputValue = 0.0
+        self.lastoutputvalue = 0.0
+        self.outputvalue = 0.0
 
     def update(self, state_value, current_time):
         """Calculates updated controller output value for given reference feedback
@@ -337,54 +337,54 @@ class OnOffController:
         else:
             error = (state_value - self.setpoint) / self.setpoint
             if error > 0.0:
-                increment = self.OutputValueIncrement
+                increment = self.outputvalueincrement
             else:
-                increment = -self.OutputValueIncrement
+                increment = -self.outputvalueincrement
 
         # Bound the controller output (between minvalue - maxvalue)
-        if self.LastOutputValue + increment > self.maxvalue:
-            self.OutputValue = self.maxvalue
-        elif self.LastOutputValue + increment < self.minvalue:
-            self.OutputValue = self.minvalue
+        if self.lastoutputvalue + increment > self.maxvalue:
+            self.outputvalue = self.maxvalue
+        elif self.lastoutputvalue + increment < self.minvalue:
+            self.outputvalue = self.minvalue
         else:
-            self.OutputValue = self.LastOutputValue + increment
+            self.outputvalue = self.lastoutputvalue + increment
 
         # Record state, error and sample time values
         self.state_history.append(state_value)
         self.error_history.append(error)
-        self.output_history.append(self.OutputValue)
+        self.output_history.append(self.outputvalue)
         # Convert from msec to sec
         self.sample_times.append(current_time / 1000)
 
-        self.LastOutputValue = self.OutputValue
+        self.lastoutputvalue = self.outputvalue
 
-        return self.OutputValue
+        return self.outputvalue
 
     def setMaxValue(self, max_value):
         """Sets the upper bound for the controller output"""
         self.maxvalue = max_value
-        self.OutputValueIncrement = (self.maxvalue - self.minvalue) / (
+        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
             self.rampduration / self.ts
         )
 
     def setMinValue(self, min_value):
         """Sets the lower bound for the controller output"""
         self.minvalue = min_value
-        self.OutputValueIncrement = (self.maxvalue - self.minvalue) / (
+        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
             self.rampduration / self.ts
         )
 
     def setRampDuration(self, ramp_duration):
         """Sets how long the controller output takes to reach its max value"""
         self.rampduration = ramp_duration
-        self.OutputValueIncrement = (self.maxvalue - self.minvalue) / (
+        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
             self.rampduration / self.ts
         )
 
     def setTs(self, ts):
         """Sets the sampling rate of the controller"""
         self.ts = ts
-        self.OutputValueIncrement = (self.maxvalue - self.minvalue) / (
+        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
             self.rampduration / self.ts
         )
 
@@ -392,8 +392,8 @@ class OnOffController:
         """Sets the label of the controller"""
         self.label = label
 
-    def setSetPoint(self, set_point):
-        self.setpoint = set_point
+    def setSetPoint(self, setpoint):
+        self.setpoint = setpoint
 
     def get_state_history(self):
         return self.state_history
@@ -436,13 +436,13 @@ class DualThresholdController:
 
         # Calculate how much controller output value will change
         # each controller call
-        self.OutputValueIncrement = (self.maxvalue - self.minvalue) / math.ceil(
+        self.outputvalueincrement = (self.maxvalue - self.minvalue) / math.ceil(
             self.rampduration / self.ts
         )
 
         # Initialize the output value of the controller
-        self.LastOutputValue = 0.0
-        self.OutputValue = 0.0
+        self.lastoutputvalue = 0.0
+        self.outputvalue = 0.0
 
         # Lists for tracking controller history
         self.state_history = []
@@ -458,8 +458,8 @@ class DualThresholdController:
         self.output_history = []
         self.sample_times = []
 
-        self.LastOutputValue = 0.0
-        self.OutputValue = 0.0
+        self.lastoutputvalue = 0.0
+        self.outputvalue = 0.0
 
     def update(self, state_value, current_time):
         """Calculates updated controller output value for given reference feedback
@@ -485,34 +485,34 @@ class DualThresholdController:
         # Increase if above upper threshold
         if state_value > self.upperthreshold:
             error = (state_value - self.upperthreshold) / self.upperthreshold
-            increment = self.OutputValueIncrement
+            increment = self.outputvalueincrement
         # Decrease if below lower threshold
         elif state_value < self.lowerthreshold:
             error = (state_value - self.lowerthreshold) / self.lowerthreshold
-            increment = -self.OutputValueIncrement
+            increment = -self.outputvalueincrement
         # Do nothing when within upper and lower thresholds
         else:
             error = 0
             increment = 0
 
         # Bound the controller output (between minvalue - maxvalue)
-        if self.LastOutputValue + increment > self.maxvalue:
-            self.OutputValue = self.maxvalue
-        elif self.LastOutputValue + increment < self.minvalue:
-            self.OutputValue = self.minvalue
+        if self.lastoutputvalue + increment > self.maxvalue:
+            self.outputvalue = self.maxvalue
+        elif self.lastoutputvalue + increment < self.minvalue:
+            self.outputvalue = self.minvalue
         else:
-            self.OutputValue = self.LastOutputValue + increment
+            self.outputvalue = self.lastoutputvalue + increment
 
         # Record state, error and sample time values
         self.state_history.append(state_value)
         self.error_history.append(error)
-        self.output_history.append(self.OutputValue)
+        self.output_history.append(self.outputvalue)
         # Convert from msec to sec
         self.sample_times.append(current_time / 1000)
 
-        self.LastOutputValue = self.OutputValue
+        self.lastoutputvalue = self.outputvalue
 
-        return self.OutputValue
+        return self.outputvalue
 
     def setUpperThreshold(self, upper_threshold):
         """Sets the upper threshold for the measured state"""
@@ -525,28 +525,28 @@ class DualThresholdController:
     def setMaxValue(self, max_value):
         """Sets the upper bound for the controller output"""
         self.maxvalue = max_value
-        self.OutputValueIncrement = (self.maxvalue - self.minvalue) / (
+        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
             self.rampduration / self.ts
         )
 
     def setMinValue(self, min_value):
         """Sets the lower bound for the controller output"""
         self.minvalue = min_value
-        self.OutputValueIncrement = (self.maxvalue - self.minvalue) / (
+        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
             self.rampduration / self.ts
         )
 
     def setRampDuration(self, ramp_duration):
         """Sets how long the controller output takes to reach its max value"""
         self.rampduration = ramp_duration
-        self.OutputValueIncrement = (self.maxvalue - self.minvalue) / (
+        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
             self.rampduration / self.ts
         )
 
     def setTs(self, ts):
         """Sets the sampling rate of the controller"""
         self.ts = ts
-        self.OutputValueIncrement = (self.maxvalue - self.minvalue) / (
+        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
             self.rampduration / self.ts
         )
 
@@ -600,10 +600,10 @@ class StandardPIDController:
         self.ITerm = 0.0
         self.DTerm = 0.0
         self.last_error = 0.0
-        self.last_OutputValue = 0.0
+        self.lastoutputvalue = 0.0
 
         # Initialize the output value of the controller
-        self.OutputValue = 0.0
+        self.outputvalue = 0.0
 
         self.state_history = []
         self.error_history = []
@@ -622,7 +622,7 @@ class StandardPIDController:
         self.output_history = []
         self.sample_times = []
 
-        self.OutputValue = 0.0
+        self.outputvalue = 0.0
 
     def update(self, state_value, current_time):
         """Calculates controller output signal for given reference feedback
@@ -668,28 +668,28 @@ class StandardPIDController:
         # Bound the controller output if necessary
         # (between minvalue - maxvalue)
         if u > self.maxvalue:
-            self.OutputValue = self.maxvalue
+            self.outputvalue = self.maxvalue
             # Back-calculate the integral error
             self.ITerm -= error * delta_time
         elif u < self.minvalue:
-            self.OutputValue = self.minvalue
+            self.outputvalue = self.minvalue
             # Back-calculate the integral error
             self.ITerm -= error * delta_time
         else:
-            self.OutputValue = u
+            self.outputvalue = u
 
         # Update the last output value
-        self.last_OutputValue = self.OutputValue
+        self.lastoutputvalue = self.outputvalue
 
         # Record state, error, y(t), and sample time values
         self.state_history.append(state_value)
         self.error_history.append(error)
-        self.output_history.append(self.OutputValue)
+        self.output_history.append(self.outputvalue)
         # Convert from msec to sec
         self.sample_times.append(current_time / 1000)
 
         # Return controller output
-        return self.OutputValue
+        return self.outputvalue
 
     def generate_dbs_signal(
         self,
@@ -777,9 +777,9 @@ class StandardPIDController:
             self.td,
         )
 
-    def setSetPoint(self, set_point):
+    def setSetPoint(self, setpoint):
         """Set target set point value"""
-        self.setpoint = set_point
+        self.setpoint = setpoint
 
     def setMaxValue(self, max_value):
         """Sets the upper bound for the controller output"""
