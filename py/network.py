@@ -144,12 +144,10 @@ def create_network(
     # 2) Make sure no cells are placed inside the stimulating/recording
     # electrode -0.5mm<x<0.5mm, -1.5mm<y<2mm
     for Cortical_cell in Cortical_Pop:
-        while (
-            (np.abs(Cortical_cell.position[0]) > 2000)
-            or ((np.abs(Cortical_cell.position[1]) > 2000))
-        ) or (
-            (np.abs(Cortical_cell.position[0]) < 500)
-            and (-1500 < Cortical_cell.position[1] < 2000)
+        x = Cortical_cell.position[0]
+        y = Cortical_cell.position[1]
+        while ((np.abs(x) > 2000) or (np.abs(y) > 2000)) or (
+            (np.abs(x) < 500) and (-1500 < y < 2000)
         ):
             Cortical_cell.position = STN_space.generate_positions(1).flatten()
 
