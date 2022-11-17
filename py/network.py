@@ -43,8 +43,9 @@ def get_network(
     np.random.seed(rng_seed)
 
     # Sphere with radius 2000 um
+    radius = 2000
     STN_space = space.RandomStructure(
-        boundary=space.Sphere(2000), rng=NumpyRNG(seed=rng_seed)
+        boundary=space.Sphere(radius), rng=NumpyRNG(seed=rng_seed)
     )
 
     striatal_spike_times_file = DATA_DIR / "Striatal_Spike_Times.npy"
@@ -146,54 +147,48 @@ def get_network(
     )
     populations.Cortical.inject(cortical_modulation_current)
 
-    cortical_xy_pos_file = DATA_DIR / "cortical_xy_pos.txt"
-    STN_Neuron_xy_Positions_file = DATA_DIR / "STN_xy_pos.txt"
+    cortical_file = DATA_DIR / "cortical_xy_pos.txt"
+    stn_file = DATA_DIR / "STN_xy_pos.txt"
     if create:
         # Position Check -
         # 1) Make sure cells are bounded in 4mm space in x, y coordinates
         # 2) Make sure no cells are placed inside the stimulating/recording
         # electrode -0.5mm<x<0.5mm, -1.5mm<y<2mm
+        def condition(x, y):
+            return ((np.abs(x) > 2000) or (np.abs(y) > 2000)) or (
+                (np.abs(x) < 500) and (-1500 < y < 2000)
+            )
+
         for Cortical_cell in populations.Cortical:
             x = Cortical_cell.position[0]
             y = Cortical_cell.position[1]
-            while ((np.abs(x) > 2000) or (np.abs(y) > 2000)) or (
-                (np.abs(x) < 500) and (-1500 < y < 2000)
-            ):
+            while condition(x, y):
                 Cortical_cell.position = STN_space.generate_positions(1).flatten()
-
-        # Save the generated cortical xy positions to a textfile
-        np.savetxt(cortical_xy_pos_file, populations.Cortical.positions, delimiter=",")
 
         for STN_cell in populations.STN:
             x = STN_cell.position[0]
             y = STN_cell.position[1]
-            while ((np.abs(x) > 2000) or ((np.abs(y) > 2000))) or (
-                (np.abs(x) < 500) and (-1500 < y < 2000)
-            ):
+            while condition(x, y):
                 STN_cell.position = STN_space.generate_positions(1).flatten()
 
-        # Save the generated STN xy positions to a textfile
-        np.savetxt(
-            STN_Neuron_xy_Positions_file, populations.STN.positions, delimiter=","
-        )
-    else:
-        # Load cortical positions - Comment/Remove to generate new positions
-        Cortical_Neuron_xy_Positions = np.loadtxt(cortical_xy_pos_file, delimiter=",")
+        # Save the generated cortical and STN xy positions to a textfile
+        np.savetxt(cortical_file, populations.Cortical.positions, delimiter=",")
+        np.savetxt(stn_file, populations.STN.positions, delimiter=",")
 
-        # Set cortical xy positions to those loaded in
+    else:
+        # Load cortical and STN positions
+        Cortical_Neuron_Positions = np.loadtxt(cortical_file, delimiter=",")
+        STN_Neuron_Positions = np.loadtxt(stn_file, delimiter=",")
+
+        # Set cortical xy positions
         for ii, cell in enumerate(populations.Cortical.all()):
             if populations.Cortical.is_local(cell):
-                cell.position[:2] = Cortical_Neuron_xy_Positions[:2, ii]
+                cell.position[:2] = Cortical_Neuron_Positions[:2, ii]
 
-        # Load STN positions - Comment/Remove to generate new positions
-        STN_Neuron_xy_Positions = np.loadtxt(
-            STN_Neuron_xy_Positions_file, delimiter=","
-        )
-
-        # Set STN xy positions to those loaded in
+        # Set STN xy and z positions
         for ii, cell in enumerate(populations.STN.all()):
             if populations.STN.is_local(cell):
-                cell.position[:2] = STN_Neuron_xy_Positions[:2, ii]
+                cell.position[:2] = STN_Neuron_Positions[:2, ii]
                 cell.position[2] = 500
 
     # Synaptic Connections
