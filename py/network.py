@@ -181,8 +181,9 @@ def get_network(
         Cortical_Neuron_xy_Positions = np.loadtxt(cortical_xy_pos_file, delimiter=",")
 
         # Set cortical xy positions to those loaded in
-        for ii, cell in enumerate(populations.Cortical):
-            cell.position[:2] = Cortical_Neuron_xy_Positions[:2, ii]
+        for ii, cell in enumerate(populations.Cortical.all()):
+            if populations.Cortical.is_local(cell):
+                cell.position[:2] = Cortical_Neuron_xy_Positions[:2, ii]
 
         # Load STN positions - Comment/Remove to generate new positions
         STN_Neuron_xy_Positions = np.loadtxt(
@@ -190,9 +191,10 @@ def get_network(
         )
 
         # Set STN xy positions to those loaded in
-        for ii, cell in enumerate(populations.STN):
-            cell.position[:2] = STN_Neuron_xy_Positions[:2, ii]
-            cell.position[2] = 500
+        for ii, cell in enumerate(populations.STN.all()):
+            if populations.STN.is_local(cell):
+                cell.position[:2] = STN_Neuron_xy_Positions[:2, ii]
+                cell.position[2] = 500
 
     # Synaptic Connections
     # Add variability to Cortical connections - cortical interneuron
