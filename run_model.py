@@ -41,7 +41,8 @@ import numpy as np
 import math
 import argparse
 from py.utils import make_beta_cheby1_filter, calculate_avg_beta_power
-from py.network import load_network, electrode_distance
+from py.network import load_network
+from py.Electrode_Distances import electrode_distance
 from py.config import Config, get_controller_kwargs
 
 # Import global variables for GPe DBS
