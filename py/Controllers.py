@@ -24,7 +24,7 @@ class ZeroController:
     Template for all other controllers
     """
 
-    label = "ZeroController"
+    _label = "ZeroController"
 
     def __init__(self, setpoint=0.0, ts=0.02):
         # Initial Controller Values
@@ -825,7 +825,7 @@ class StandardPIDController:
 
 class IterativeFeedbackTuningPIController(ZeroController):
 
-    label = "iterative_feedback_tuning_PI_Controller"
+    _label = "iterative_feedback_tuning_PI_Controller"
 
     def __init__(
         self,
