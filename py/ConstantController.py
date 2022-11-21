@@ -22,6 +22,7 @@ class ConstantController:
     """Constant DBS Parameter Controller Class"""
 
     label = "Constant_Controller"
+    units = "mA"
 
     def __init__(
         self,
@@ -30,18 +31,22 @@ class ConstantController:
         maxvalue=1e9,
         constantvalue=0.0,
         ts=0.0,
-        units="mA",
     ):
         # Initial Controller Values
         self.setpoint = setpoint
+        self.ts = ts  # should be in sec
+
+        self.current_time = 0.0  # (sec)
+        self.last_time = 0.0
+        self.last_error = 0.0
+        self.last_output_value = 0.0
+
         self.maxvalue = maxvalue
         self.minvalue = minvalue
         self.constantvalue = constantvalue
-        self.ts = ts  # should be in sec as per above
-        self.units = units
 
-        # Set output value
-        self.output_value = 0
+        # Initialize the output value of the controller
+        self.output_value = 0.0
 
         # Lists for tracking controller history
         self.state_history = []
@@ -50,13 +55,16 @@ class ConstantController:
         self.sample_times = []
 
     def clear(self):
-        """Clears current On-Off controller output value and history"""
+        """Clears controller variables"""
+
+        self.last_error = 0.0
 
         self.state_history = []
         self.error_history = []
         self.output_history = []
         self.sample_times = []
 
+        self.last_output_value = 0.0
         self.output_value = 0.0
 
     def update(self, state_value, current_time):
@@ -66,8 +74,8 @@ class ConstantController:
 
         """
 
-        # Calculate Error - if setpoint > 0.0
-        # normalize error with respect to set point
+        # Calculate Error - if setpoint > 0.0, then normalize error with
+        # respect to set point
         if self.setpoint == 0.0:
             error = state_value - self.setpoint
         else:
@@ -81,11 +89,19 @@ class ConstantController:
         else:
             self.output_value = self.constantvalue
 
-        # Record state, error and sample time values
+        # Remember last time and last error for next calculation
+        self.last_time = self.current_time
+        self.last_error = error
+
+        # Update the last output value
+        self.last_output_value = self.output_value
+
+        # Record state, error, y(t), and sample time values
         self.state_history.append(state_value)
         self.error_history.append(error)
         self.output_history.append(self.output_value)
         # Convert from msec to sec
         self.sample_times.append(current_time / 1000)
 
+        # Return controller output
         return self.output_value

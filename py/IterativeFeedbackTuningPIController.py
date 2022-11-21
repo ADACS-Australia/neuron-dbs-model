@@ -15,22 +15,21 @@ import numpy as np
 import scipy.signal as signal
 from mpi4py import MPI
 
-from .ZeroController import ZeroController
-
 rank = MPI.COMM_WORLD.Get_rank()
 
 
-class IterativeFeedbackTuningPIController(ZeroController):
+class IterativeFeedbackTuningPIController:
 
     label = "Iterative_Feedback_Tuning_PI_Controller"
+    units = "mA"
 
     def __init__(
         self,
-        stage_length,
         setpoint=0.0,
+        ts=0.02,
+        stage_length=0.0,
         kp=0.0,
         ti=0.0,
-        ts=0.02,
         minvalue=0.0,
         maxvalue=1e9,
         gamma=0.005,
@@ -38,8 +37,23 @@ class IterativeFeedbackTuningPIController(ZeroController):
         min_kp=0,
         min_ti=0,
     ):
+        # Initial Controller Values
+        self.setpoint = setpoint
+        self.ts = ts  # should be in sec
 
-        super().__init__(setpoint, ts)
+        self.current_time = 0.0  # (sec)
+        self.last_time = 0.0
+        self.last_error = 0.0
+        self.last_output_value = 0.0
+
+        # Initialize the output value of the controller
+        self.output_value = 0.0
+
+        # Lists for tracking controller history
+        self.state_history = []
+        self.error_history = []
+        self.output_history = []
+        self.sample_times = []
 
         self.stage_length = stage_length
         self.stage_length_samples = int(np.ceil(stage_length / ts)) + 1
@@ -66,7 +80,15 @@ class IterativeFeedbackTuningPIController(ZeroController):
     def clear(self):
         """Clears controller variables"""
 
-        super().clear()
+        self.last_error = 0.0
+
+        self.state_history = []
+        self.error_history = []
+        self.output_history = []
+        self.sample_times = []
+
+        self.last_output_value = 0.0
+        self.output_value = 0.0
 
         self.integral_term = 0.0
         self.integral_term_history = []
@@ -201,14 +223,16 @@ class IterativeFeedbackTuningPIController(ZeroController):
         else:
             self.output_value = u
 
-        self.integral_term_history.append(self.integral_term)
+        # Record state, error, y(t), and sample time values
         self.state_history.append(state_value)
         self.error_history.append(error)
-        self.iteration_history.append(self.iteration_stage)
-        self.reference_history.append(setpoint)
-        self.sample_times.append(current_time / 1000)
         self.output_history.append(self.output_value)
         self.parameter_history.append([self.kp, self.ti])
+        self.integral_term_history.append(self.integral_term)
+        self.iteration_history.append(self.iteration_stage)
+        self.reference_history.append(setpoint)
+        # Convert from msec to sec
+        self.sample_times.append(current_time / 1000)
 
         # Return controller output
         return self.output_value

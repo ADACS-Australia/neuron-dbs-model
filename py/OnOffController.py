@@ -22,28 +22,31 @@ class OnOffController:
     """On-Off Controller Class"""
 
     label = "On_Off_Controller"
+    units = "mA"
 
     def __init__(
-        self, setpoint=0.0, minvalue=0.0, maxvalue=1e9, rampduration=0.25, ts=0.02
+        self,
+        setpoint=0.0,
+        ts=0.02,
+        minvalue=0.0,
+        maxvalue=1e9,
+        rampduration=0.25,
     ):
         # Initial Controller Values
         self.setpoint = setpoint
+        self.ts = ts  # should be in sec
         self.maxvalue = maxvalue
         self.minvalue = minvalue
         # should be defined in sec, i.e. 0.25 sec
         self.rampduration = rampduration
-        # should be in sec as per above
-        self.ts = ts
 
-        # Calculate how much controller output value will change each
-        # controller call
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / math.ceil(
-            self.rampduration / self.ts
-        )
+        self.current_time = 0.0  # (sec)
+        self.last_time = 0.0
+        self.last_error = 0.0
+        self.last_output_value = 0.0
 
         # Initialize the output value of the controller
-        self.last_output_value = 0
-        self.output_value = 0
+        self.output_value = 0.0
 
         # Lists for tracking controller history
         self.state_history = []
@@ -52,7 +55,9 @@ class OnOffController:
         self.sample_times = []
 
     def clear(self):
-        """Clears current On-Off controller output value and history"""
+        """Clears controller variables"""
+
+        self.last_error = 0.0
 
         self.state_history = []
         self.error_history = []
@@ -73,9 +78,10 @@ class OnOffController:
         or -maxvalue / (rampduration/ts) if e(t) < setpoint
 
         """
+        self.current_time = current_time
 
-        # Calculate Error - if setpoint > 0.0
-        # normalize error withrespect to set point
+        # Calculate Error - if setpoint > 0.0, then normalize error with
+        # respect to set point
         if self.setpoint == 0.0:
             error = state_value - self.setpoint
             increment = 0.0
@@ -94,41 +100,71 @@ class OnOffController:
         else:
             self.output_value = self.last_output_value + increment
 
-        # Record state, error and sample time values
+        # Remember last time and last error for next calculation
+        self.last_time = self.current_time
+        self.last_error = error
+
+        # Update the last output value
+        self.last_output_value = self.output_value
+
+        # Record state, error, y(t), and sample time values
         self.state_history.append(state_value)
         self.error_history.append(error)
         self.output_history.append(self.output_value)
         # Convert from msec to sec
         self.sample_times.append(current_time / 1000)
 
-        self.last_output_value = self.output_value
-
+        # Return controller output
         return self.output_value
 
-    def setMaxValue(self, max_value):
-        """Sets the upper bound for the controller output"""
-        self.maxvalue = max_value
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
-            self.rampduration / self.ts
+    # Calculate how much controller output value will change each controller call
+    @staticmethod
+    def _outputvalueincrement(maxvalue, minvalue, rampduration, ts):
+        return (maxvalue - minvalue) / math.ceil(rampduration / ts)
+
+    @property
+    def maxvalue(self):
+        return self._maxvalue
+
+    @maxvalue.setter
+    def maxvalue(self, maxvalue):
+        self._maxvalue = maxvalue
+        self.outputvalueincrement = self._outputvalueincrement(
+            maxvalue, self.minvalue, self.rampduration, self.ts
         )
 
-    def setMinValue(self, min_value):
+    @property
+    def minvalue(self):
+        return self._minvalue
+
+    @minvalue.setter
+    def minvalue(self, minvalue):
         """Sets the lower bound for the controller output"""
-        self.minvalue = min_value
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
-            self.rampduration / self.ts
+        self._minvalue = minvalue
+        self.outputvalueincrement = self._outputvalueincrement(
+            self.maxvalue, minvalue, self.rampduration, self.ts
         )
 
-    def setRampDuration(self, ramp_duration):
+    @property
+    def rampduration(self):
+        return self._rampduration
+
+    @rampduration.setter
+    def rampduration(self, ramp_duration):
         """Sets how long the controller output takes to reach its max value"""
-        self.rampduration = ramp_duration
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
-            self.rampduration / self.ts
+        self._rampduration = ramp_duration
+        self.outputvalueincrement = self._outputvalueincrement(
+            self.maxvalue, self.minvalue, ramp_duration, self.ts
         )
 
-    def setTs(self, ts):
+    @property
+    def ts(self):
+        return self._ts
+
+    @ts.setter
+    def ts(self, ts):
         """Sets the sampling rate of the controller"""
-        self.ts = ts
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
-            self.rampduration / self.ts
+        self._ts = ts
+        self.outputvalueincrement = self._outputvalueincrement(
+            self.maxvalue, self.minvalue, self.rampduration, ts
         )
