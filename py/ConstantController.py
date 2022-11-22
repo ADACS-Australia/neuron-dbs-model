@@ -79,6 +79,7 @@ class ConstantController:
 
     def set_output(self, state_value):
         """Always sets controller output value to constant"""
+
         error = self.get_error(state_value)
 
         # Bound the controller output (between minvalue - maxvalue)

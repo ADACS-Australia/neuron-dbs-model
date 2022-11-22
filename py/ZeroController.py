@@ -76,7 +76,6 @@ class ZeroController:
         """Always sets controller output value to zero"""
 
         error = self.get_error(state_value)
-
         self.output_value = 0.0
 
         return error
