@@ -39,7 +39,7 @@ from pyNN.parameters import Sequence
 
 # Import global variables for GPe DBS
 import py.Global_Variables as GV
-from py.config import Config, get_controller_kwargs
+from py.config import Config, controller_interface
 from py.Controllers import (
     IterativeFeedbackTuningPIController,
     StandardPIDController,
@@ -226,7 +226,7 @@ if __name__ == "__main__":
     else:
         raise RuntimeError("Bad choice of Controller")
 
-    controller_kwargs = get_controller_kwargs(c)
+    controller_kwargs = controller_interface(c)
     controller = Controller(**controller_kwargs)
 
     simulation_output_dir = output_dir

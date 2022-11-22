@@ -9,28 +9,23 @@ zero_schema = dict(
 )
 
 pid_schema = dict(
-    setpoint={"type": "float", "coerce": float},
     kp={"type": "float", "coerce": float},
     ti={"type": "float", "coerce": float},
     td={"type": "float", "coerce": float},
-    ts={"type": "float", "coerce": float},
     minvalue={"type": "float", "coerce": float},
     maxvalue={"type": "float", "coerce": float},
 )
+pid_schema.update(zero_schema)
 
 ift_schema = dict(
-    setpoint={"type": "float", "coerce": float},
-    kp={"type": "float", "coerce": float},
-    ti={"type": "float", "coerce": float},
-    ts={"type": "float", "coerce": float},
-    minvalue={"type": "float", "coerce": float},
-    maxvalue={"type": "float", "coerce": float},
     stage_length={"type": "float", "coerce": float},
     gamma={"type": "float", "coerce": float},
     lam={"type": "float", "coerce": float},
     min_kp={"type": "float", "coerce": float},
     min_ti={"type": "float", "coerce": float},
 )
+ift_schema.update(pid_schema)
+del ift_schema["td"]
 
 
 class Config(object):
@@ -87,7 +82,7 @@ class Config(object):
         return str(vars(self)).strip("{}").replace(", ", ",\n")
 
 
-def get_controller_kwargs(config):
+def controller_interface(config):
     v = Validator(require_all=True, purge_unknown=True)
     controller = config.Controller
     if controller == "ZERO":
