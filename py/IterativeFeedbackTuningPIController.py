@@ -21,7 +21,6 @@ rank = MPI.COMM_WORLD.Get_rank()
 class IterativeFeedbackTuningPIController:
 
     label = "Iterative_Feedback_Tuning_PI_Controller"
-    units = "mA"
 
     def __init__(
         self,
@@ -37,23 +36,7 @@ class IterativeFeedbackTuningPIController:
         min_kp=0,
         min_ti=0,
     ):
-        # Initial Controller Values
-        self.setpoint = setpoint
-        self.ts = ts  # should be in sec
-
-        self.current_time = 0.0  # (sec)
-        self.last_time = 0.0
-        self.last_error = 0.0
-        self.last_output_value = 0.0
-
-        # Initialize the output value of the controller
-        self.output_value = 0.0
-
-        # Lists for tracking controller history
-        self.state_history = []
-        self.error_history = []
-        self.output_history = []
-        self.sample_times = []
+        super().__init__(setpoint,ts)
 
         self.stage_length = stage_length
         self.stage_length_samples = int(np.ceil(stage_length / ts)) + 1
@@ -80,15 +63,7 @@ class IterativeFeedbackTuningPIController:
     def clear(self):
         """Clears controller variables"""
 
-        self.last_error = 0.0
-
-        self.state_history = []
-        self.error_history = []
-        self.output_history = []
-        self.sample_times = []
-
-        self.last_output_value = 0.0
-        self.output_value = 0.0
+        super().clear()
 
         self.integral_term = 0.0
         self.integral_term_history = []
@@ -164,24 +139,8 @@ class IterativeFeedbackTuningPIController:
             self.output_value = u
 
     def update(self, state_value, current_time):
-        """Update controller state"""
-        self.current_time = current_time
+        super().update(state_value, current_time)
 
-        error = self.set_output(state_value)
-
-        # Remember last time and last error for next calculation
-        self.last_time = self.current_time
-        self.last_error = error
-
-        # Update the last output value
-        self.last_output_value = self.output_value
-
-        # Record state, error, y(t), and sample time values
-        self.state_history.append(state_value)
-        self.error_history.append(error)
-        self.output_history.append(self.output_value)
-        # Convert from msec to sec
-        self.sample_times.append(current_time / 1000)
         self.parameter_history.append([self.kp, self.ti])
         self.integral_term_history.append(self.integral_term)
         self.iteration_history.append(self.iteration_stage)
