@@ -103,7 +103,7 @@ class ZeroController:
         return self.output_value
 
 
-class ConstantController:
+class ConstantController(ZeroController):
     """Constant DBS Parameter Controller Class"""
 
     label = "Constant_Controller"
@@ -302,7 +302,7 @@ class DualThresholdController(OnOffController):
         return error, increment
 
 
-class StandardPIDController:
+class StandardPIDController(ZeroController):
     """Standard PID Controller Class"""
 
     label = "Standard_PID_Controller"
@@ -385,7 +385,7 @@ class StandardPIDController:
         return error
 
 
-class IterativeFeedbackTuningPIController:
+class IterativeFeedbackTuningPIController(ZeroController):
 
     label = "Iterative_Feedback_Tuning_PI_Controller"
 
