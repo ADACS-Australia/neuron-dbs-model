@@ -12,7 +12,6 @@ https://www.frontiersin.org/articles/10.3389/fnins.2020.00166/
 import math
 
 import numpy as np
-import scipy.signal as signal
 from mpi4py import MPI
 
 rank = MPI.COMM_WORLD.Get_rank()
@@ -25,8 +24,13 @@ class ZeroController:
     """
 
     label = "Zero_Controller"
+    units = "mA"
 
-    def __init__(self, setpoint=0.0, ts=0.02):
+    def __init__(
+        self,
+        setpoint=0.0,
+        ts=0.02,
+    ):
         # Initial Controller Values
         self.setpoint = setpoint
         self.ts = ts  # should be in sec
@@ -55,26 +59,35 @@ class ZeroController:
         self.output_history = []
         self.sample_times = []
 
+        self.last_output_value = 0.0
         self.output_value = 0.0
 
-    def update(self, state_value, current_time):
-        """Update controller state"""
-
+    def get_error(self, state_value):
         # Calculate Error - if setpoint > 0.0, then normalize error with
         # respect to set point
         if self.setpoint == 0.0:
             error = state_value - self.setpoint
         else:
             error = (state_value - self.setpoint) / self.setpoint
+        return error
 
-        # Converting from msec to sec
-        self.current_time = current_time / 1000.0
+    def set_output(self, state_value):
+        """Always sets controller output value to zero"""
+
+        error = self.get_error(state_value)
+        self.output_value = 0.0
+
+        return error
+
+    def update(self, state_value, current_time):
+        """Update controller state"""
+        self.current_time = current_time
+
+        error = self.set_output(state_value)
 
         # Remember last time and last error for next calculation
         self.last_time = self.current_time
         self.last_error = error
-
-        self.output_value = 0
 
         # Update the last output value
         self.last_output_value = self.output_value
@@ -89,62 +102,6 @@ class ZeroController:
         # Return controller output
         return self.output_value
 
-    def generate_dbs_signal(
-        self,
-        start_time,
-        stop_time,
-        dt,
-        amplitude,
-        frequency,
-        pulse_width,
-        offset,
-        last_pulse_time_prior=0,
-    ):
-        """Generate monophasic square-wave DBS signal
-
-        Example inputs:
-            start_time = 0                # ms
-            stop_time = 12000            # ms
-            dt = 0.01                    # ms
-            amplitude = -1.0            # mA (<0 = cathodic, >0 = anodic)
-            frequency = 130.0            # Hz
-            pulse_width    = 0.06            # ms
-            offset = 0                    # mA
-        """
-
-        times = np.round(np.arange(start_time, stop_time, dt), 2)
-        tmp = np.arange(0, stop_time - start_time, dt) / 1000.0
-
-        if frequency == 0:
-            dbs_signal = np.zeros(len(tmp))
-            last_pulse_time = last_pulse_time_prior
-            next_pulse_time = 1e9
-        else:
-            # Calculate the duty cycle of the DBS signal
-            isi = 1000.0 / frequency  # time is in ms
-            duty_cycle = pulse_width / isi
-            tt = 2.0 * np.pi * frequency * tmp
-            dbs_signal = offset + 0.5 * (1.0 + signal.square(tt, duty=duty_cycle))
-            dbs_signal[-1] = 0.0
-
-            # Calculate the time for the first pulse of the next segment
-            try:
-                last_pulse_index = np.where(np.diff(dbs_signal) < 0)[0][-1]
-                next_pulse_time = times[last_pulse_index] + isi - pulse_width
-
-                # Track when the last pulse was
-                last_pulse_time = times[last_pulse_index]
-
-            except IndexError:
-                # Catch times when signal may be flat
-                last_pulse_index = len(dbs_signal) - 1
-                next_pulse_time = times[last_pulse_index] + isi - pulse_width
-
-            # Rescale amplitude
-            dbs_signal *= amplitude
-
-        return dbs_signal, times, next_pulse_time, last_pulse_time
-
 
 class ConstantController:
     """Constant DBS Parameter Controller Class"""
@@ -154,52 +111,21 @@ class ConstantController:
     def __init__(
         self,
         setpoint=0.0,
+        ts=0.0,
         minvalue=0.0,
         maxvalue=1e9,
         constantvalue=0.0,
-        ts=0.0,
-        units="mA",
     ):
-        # Initial Controller Values
-        self.setpoint = setpoint
+        super().__init__(setpoint, ts)
+
         self.maxvalue = maxvalue
         self.minvalue = minvalue
         self.constantvalue = constantvalue
-        self.ts = ts  # should be in sec as per above
-        self.units = units
 
-        # Set output value
-        self.output_value = 0
+    def set_output(self, state_value):
+        """Always sets controller output value to constant"""
 
-        # Lists for tracking controller history
-        self.state_history = []
-        self.error_history = []
-        self.output_history = []
-        self.sample_times = []
-
-    def clear(self):
-        """Clears current On-Off controller output value and history"""
-
-        self.state_history = []
-        self.error_history = []
-        self.output_history = []
-        self.sample_times = []
-
-        self.output_value = 0.0
-
-    def update(self, state_value, current_time):
-        """Calculates biomarker for constant DBS value
-
-        u = self.constantvalue
-
-        """
-
-        # Calculate Error - if setpoint > 0.0
-        # normalize error with respect to set point
-        if self.setpoint == 0.0:
-            error = state_value - self.setpoint
-        else:
-            error = (state_value - self.setpoint) / self.setpoint
+        error = self.get_error(state_value)
 
         # Bound the controller output (between minvalue - maxvalue)
         if self.constantvalue > self.maxvalue:
@@ -209,61 +135,29 @@ class ConstantController:
         else:
             self.output_value = self.constantvalue
 
-        # Record state, error and sample time values
-        self.state_history.append(state_value)
-        self.error_history.append(error)
-        self.output_history.append(self.output_value)
-        # Convert from msec to sec
-        self.sample_times.append(current_time / 1000)
-
-        return self.output_value
+        return error
 
 
-class OnOffController:
+class OnOffController(ConstantController):
     """On-Off Controller Class"""
 
     label = "On_Off_Controller"
 
     def __init__(
-        self, setpoint=0.0, minvalue=0.0, maxvalue=1e9, rampduration=0.25, ts=0.02
+        self,
+        setpoint=0.0,
+        ts=0.02,
+        minvalue=0.0,
+        maxvalue=1e9,
+        rampduration=0.25,
     ):
-        # Initial Controller Values
-        self.setpoint = setpoint
-        self.maxvalue = maxvalue
-        self.minvalue = minvalue
+        super().__init__(setpoint, ts, minvalue, maxvalue, constantvalue=None)
+        del self.constantvalue
+
         # should be defined in sec, i.e. 0.25 sec
         self.rampduration = rampduration
-        # should be in sec as per above
-        self.ts = ts
 
-        # Calculate how much controller output value will change each
-        # controller call
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / math.ceil(
-            self.rampduration / self.ts
-        )
-
-        # Initialize the output value of the controller
-        self.last_output_value = 0
-        self.output_value = 0
-
-        # Lists for tracking controller history
-        self.state_history = []
-        self.error_history = []
-        self.output_history = []
-        self.sample_times = []
-
-    def clear(self):
-        """Clears current On-Off controller output value and history"""
-
-        self.state_history = []
-        self.error_history = []
-        self.output_history = []
-        self.sample_times = []
-
-        self.last_output_value = 0.0
-        self.output_value = 0.0
-
-    def update(self, state_value, current_time):
+    def get_error(self, state_value):
         """Calculates updated controller output value for given reference feedback
 
         y(t) = y(t-1) + u(t)
@@ -274,9 +168,8 @@ class OnOffController:
         or -maxvalue / (rampduration/ts) if e(t) < setpoint
 
         """
-
-        # Calculate Error - if setpoint > 0.0
-        # normalize error withrespect to set point
+        # Calculate Error - if setpoint > 0.0, then normalize error with
+        # respect to set point
         if self.setpoint == 0.0:
             error = state_value - self.setpoint
             increment = 0.0
@@ -286,6 +179,11 @@ class OnOffController:
                 increment = self.outputvalueincrement
             else:
                 increment = -self.outputvalueincrement
+        return error, increment
+
+    def set_output(self, state_value):
+
+        error, increment = self.get_error(state_value)
 
         # Bound the controller output (between minvalue - maxvalue)
         if self.last_output_value + increment > self.maxvalue:
@@ -295,100 +193,83 @@ class OnOffController:
         else:
             self.output_value = self.last_output_value + increment
 
-        # Record state, error and sample time values
-        self.state_history.append(state_value)
-        self.error_history.append(error)
-        self.output_history.append(self.output_value)
-        # Convert from msec to sec
-        self.sample_times.append(current_time / 1000)
+        return error
 
-        self.last_output_value = self.output_value
+    # Calculate how much controller output value will change each controller call
+    @staticmethod
+    def _outputvalueincrement(maxvalue, minvalue, rampduration, ts):
+        return (maxvalue - minvalue) / math.ceil(rampduration / ts)
 
-        return self.output_value
+    @property
+    def maxvalue(self):
+        return self._maxvalue
 
-    def setMaxValue(self, max_value):
-        """Sets the upper bound for the controller output"""
-        self.maxvalue = max_value
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
-            self.rampduration / self.ts
+    @maxvalue.setter
+    def maxvalue(self, maxvalue):
+        self._maxvalue = maxvalue
+        self.outputvalueincrement = self._outputvalueincrement(
+            maxvalue, self.minvalue, self.rampduration, self.ts
         )
 
-    def setMinValue(self, min_value):
+    @property
+    def minvalue(self):
+        return self._minvalue
+
+    @minvalue.setter
+    def minvalue(self, minvalue):
         """Sets the lower bound for the controller output"""
-        self.minvalue = min_value
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
-            self.rampduration / self.ts
+        self._minvalue = minvalue
+        self.outputvalueincrement = self._outputvalueincrement(
+            self.maxvalue, minvalue, self.rampduration, self.ts
         )
 
-    def setRampDuration(self, ramp_duration):
+    @property
+    def rampduration(self):
+        return self._rampduration
+
+    @rampduration.setter
+    def rampduration(self, ramp_duration):
         """Sets how long the controller output takes to reach its max value"""
-        self.rampduration = ramp_duration
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
-            self.rampduration / self.ts
+        self._rampduration = ramp_duration
+        self.outputvalueincrement = self._outputvalueincrement(
+            self.maxvalue, self.minvalue, ramp_duration, self.ts
         )
 
-    def setTs(self, ts):
+    @property
+    def ts(self):
+        return self._ts
+
+    @ts.setter
+    def ts(self, ts):
         """Sets the sampling rate of the controller"""
-        self.ts = ts
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
-            self.rampduration / self.ts
+        self._ts = ts
+        self.outputvalueincrement = self._outputvalueincrement(
+            self.maxvalue, self.minvalue, self.rampduration, ts
         )
 
 
-class DualThresholdController:
+class DualThresholdController(OnOffController):
     """Dual-Threshold Controller Class"""
 
     label = "DualThresholdController"
 
     def __init__(
         self,
-        lowerthreshold=0.0,
-        upperthreshold=0.1,
+        ts=0.02,
         minvalue=0.0,
         maxvalue=1e9,
         rampduration=0.25,
-        ts=0.02,
+        lowerthreshold=0.0,
+        upperthreshold=0.1,
     ):
-        # Initial Controller Values
+        super().__init__(None, ts, minvalue, maxvalue, rampduration)
+
+        del self.setpoint
         self.upperthreshold = upperthreshold
         self.lowerthreshold = lowerthreshold
-        self.maxvalue = maxvalue
-        self.minvalue = minvalue
-        # should be defined in sec, i.e. 0.25 sec
-        self.rampduration = rampduration
-        # should be in sec as per above
-        self.ts = ts
 
-        # Calculate how much controller output value will change
-        # each controller call
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / math.ceil(
-            self.rampduration / self.ts
-        )
-
-        # Initialize the output value of the controller
-        self.last_output_value = 0.0
-        self.output_value = 0.0
-
-        # Lists for tracking controller history
-        self.state_history = []
-        self.error_history = []
-        self.output_history = []
-        self.sample_times = []
-
-    def clear(self):
-        """Clears current dual-threshold controller output value and history"""
-
-        self.state_history = []
-        self.error_history = []
-        self.output_history = []
-        self.sample_times = []
-
-        self.last_output_value = 0.0
-        self.output_value = 0.0
-
-    def update(self, state_value, current_time):
+    def get_error(self, state_value):
         """Calculates updated controller output value for given reference feedback
-
         if state_value > upper_threshold:
             y(t) = y(t-1) + u(t)
         elif state_value < lower_threshold:
@@ -404,7 +285,6 @@ class DualThresholdController:
         if state_value(t) < lowerthreshold
 
         """
-
         # Check how to update controller value and calculate error with
         # respect to upper/lower threshold
         # Increase if above upper threshold
@@ -419,53 +299,7 @@ class DualThresholdController:
         else:
             error = 0
             increment = 0
-
-        # Bound the controller output (between minvalue - maxvalue)
-        if self.last_output_value + increment > self.maxvalue:
-            self.output_value = self.maxvalue
-        elif self.last_output_value + increment < self.minvalue:
-            self.output_value = self.minvalue
-        else:
-            self.output_value = self.last_output_value + increment
-
-        # Record state, error and sample time values
-        self.state_history.append(state_value)
-        self.error_history.append(error)
-        self.output_history.append(self.output_value)
-        # Convert from msec to sec
-        self.sample_times.append(current_time / 1000)
-
-        self.last_output_value = self.output_value
-
-        return self.output_value
-
-    def setMaxValue(self, max_value):
-        """Sets the upper bound for the controller output"""
-        self.maxvalue = max_value
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
-            self.rampduration / self.ts
-        )
-
-    def setMinValue(self, min_value):
-        """Sets the lower bound for the controller output"""
-        self.minvalue = min_value
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
-            self.rampduration / self.ts
-        )
-
-    def setRampDuration(self, ramp_duration):
-        """Sets how long the controller output takes to reach its max value"""
-        self.rampduration = ramp_duration
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
-            self.rampduration / self.ts
-        )
-
-    def setTs(self, ts):
-        """Sets the sampling rate of the controller"""
-        self.ts = ts
-        self.outputvalueincrement = (self.maxvalue - self.minvalue) / (
-            self.rampduration / self.ts
-        )
+        return error, increment
 
 
 class StandardPIDController:
@@ -474,10 +308,17 @@ class StandardPIDController:
     label = "Standard_PID_Controller"
 
     def __init__(
-        self, setpoint=0.0, kp=0.0, ti=0.0, td=0.0, ts=0.02, minvalue=0.0, maxvalue=1e9
+        self,
+        setpoint=0.0,
+        ts=0.02,
+        kp=0.0,
+        ti=0.0,
+        td=0.0,
+        minvalue=0.0,
+        maxvalue=1e9,
     ):
+        super().__init__(setpoint, ts)
 
-        self.setpoint = setpoint
         self.kp = kp
         self.ti = ti
         self.td = td
@@ -486,39 +327,19 @@ class StandardPIDController:
         self.minvalue = minvalue
         self.maxvalue = maxvalue
 
-        self.ts = ts
-        self.current_time = 0.0  # (sec)
-        self.last_time = 0.0
-
         # Initialize controller terms
         self.ITerm = 0.0
         self.DTerm = 0.0
-        self.last_error = 0.0
-        self.last_output_value = 0.0
-
-        # Initialize the output value of the controller
-        self.output_value = 0.0
-
-        self.state_history = []
-        self.error_history = []
-        self.output_history = []
-        self.sample_times = []
 
     def clear(self):
-        """Clears PID computations and coefficients"""
+        """Clears controller variables"""
+
+        super().clear()
 
         self.ITerm = 0.0
         self.DTerm = 0.0
-        self.last_error = 0.0
 
-        self.state_history = []
-        self.error_history = []
-        self.output_history = []
-        self.sample_times = []
-
-        self.output_value = 0.0
-
-    def update(self, state_value, current_time):
+    def set_output(self, state_value):
         """Calculates controller output signal for given reference feedback
 
         where:
@@ -529,15 +350,8 @@ class StandardPIDController:
 
         """
 
-        # Calculate Error - if setpoint > 0.0, then normalize error with
-        # respect to set point
-        if self.setpoint == 0.0:
-            error = state_value - self.setpoint
-        else:
-            error = (state_value - self.setpoint) / self.setpoint
+        error = self.get_error(state_value)
 
-        # Converting from msec to sec
-        self.current_time = current_time / 1000.0
         delta_time = self.ts
         delta_error = error - self.last_error
 
@@ -546,10 +360,6 @@ class StandardPIDController:
         self.DTerm = 0.0
         if delta_time > 0:
             self.DTerm = delta_error / delta_time
-
-        # Remember last time and last error for next calculation
-        self.last_time = self.current_time
-        self.last_error = error
 
         # Calculate u(t) - catch potential division by zero error
         try:
@@ -572,87 +382,20 @@ class StandardPIDController:
         else:
             self.output_value = u
 
-        # Update the last output value
-        self.last_output_value = self.output_value
-
-        # Record state, error, y(t), and sample time values
-        self.state_history.append(state_value)
-        self.error_history.append(error)
-        self.output_history.append(self.output_value)
-        # Convert from msec to sec
-        self.sample_times.append(current_time / 1000)
-
-        # Return controller output
-        return self.output_value
-
-    def generate_dbs_signal(
-        self,
-        start_time,
-        stop_time,
-        dt,
-        amplitude,
-        frequency,
-        pulse_width,
-        offset,
-        last_pulse_time_prior=0,
-    ):
-        """Generate monophasic square-wave DBS signal
-
-        Example inputs:
-            start_time = 0                # ms
-            stop_time = 12000            # ms
-            dt = 0.01                    # ms
-            amplitude = -1.0            # mA (<0 = cathodic, >0 = anodic)
-            frequency = 130.0            # Hz
-            pulse_width    = 0.06            # ms
-            offset = 0                    # mA
-        """
-
-        times = np.round(np.arange(start_time, stop_time, dt), 2)
-        tmp = np.arange(0, stop_time - start_time, dt) / 1000.0
-
-        if frequency == 0:
-            dbs_signal = np.zeros(len(tmp))
-            last_pulse_time = last_pulse_time_prior
-            next_pulse_time = 1e9
-        else:
-            # Calculate the duty cycle of the DBS signal
-            isi = 1000.0 / frequency  # time is in ms
-            duty_cycle = pulse_width / isi
-            tt = 2.0 * np.pi * frequency * tmp
-            dbs_signal = offset + 0.5 * (1.0 + signal.square(tt, duty=duty_cycle))
-            dbs_signal[-1] = 0.0
-
-            # Calculate the time for the first pulse of the next segment
-            try:
-                last_pulse_index = np.where(np.diff(dbs_signal) < 0)[0][-1]
-                next_pulse_time = times[last_pulse_index] + isi - pulse_width
-
-                # Track when the last pulse was
-                last_pulse_time = times[last_pulse_index]
-
-            except IndexError:
-                # Catch times when signal may be flat
-                last_pulse_index = len(dbs_signal) - 1
-                next_pulse_time = times[last_pulse_index] + isi - pulse_width
-
-            # Rescale amplitude
-            dbs_signal *= amplitude
-
-        return dbs_signal, times, next_pulse_time, last_pulse_time
+        return error
 
 
-class IterativeFeedbackTuningPIController(ZeroController):
+class IterativeFeedbackTuningPIController:
 
     label = "Iterative_Feedback_Tuning_PI_Controller"
 
     def __init__(
         self,
-        stage_length,
         setpoint=0.0,
+        ts=0.02,
+        stage_length=0.0,
         kp=0.0,
         ti=0.0,
-        ts=0.02,
         minvalue=0.0,
         maxvalue=1e9,
         gamma=0.005,
@@ -660,7 +403,6 @@ class IterativeFeedbackTuningPIController(ZeroController):
         min_kp=0,
         min_ti=0,
     ):
-
         super().__init__(setpoint, ts)
 
         self.stage_length = stage_length
@@ -695,6 +437,84 @@ class IterativeFeedbackTuningPIController(ZeroController):
         self.iteration_history = []
         self.parameter_history = []
         self.recorded_output = np.zeros(self.stage_length_samples)
+
+    def get_error(self, state_value):
+        if self.setpoint != 0:
+            error = (state_value - self.setpoint) / self.setpoint
+        else:
+            error = state_value
+        return error
+
+    def set_output(self, state_value):
+        """"""
+        elapsed_time = (self.current_time - self.stage_start_time) / 1000
+        self.setpoint = self.reference_signal(elapsed_time)
+        if rank == 0:
+            print(
+                "Stage: %d, Elapsed time: %.3f s, Reference: %.5f"
+                % (self.iteration_stage, elapsed_time, self.setpoint)
+            )
+
+        if elapsed_time >= self.stage_length:
+            if (
+                self.iteration_stage == 0
+                and len(self.error_history) < self.stage_length_samples
+            ):
+                if rank == 0:
+                    print("Extending stage 0 to gather more samples")
+            elif (
+                self.iteration_stage == 1
+                and len(self.error_history) < 2 * self.stage_length_samples
+            ):
+                if rank == 0:
+                    print("Extending stage 1 to gather more samples")
+            else:
+                if self.iteration_stage == 1:
+                    self.kp, self.ti = self.new_controller_parameters()
+                    if rank == 0:
+                        print(f"New params: kp={self.kp}, ti={self.ti}")
+                self.stage_start_time = self.current_time
+                elapsed_time = 0
+                self.iteration_stage = (self.iteration_stage + 1) % 2
+                if rank == 0:
+                    print("Stage change, now at stage %d" % self.iteration_stage)
+
+        if self.iteration_stage == 0:
+            sample = int(elapsed_time / self.ts)
+            self.recorded_output[sample] = state_value
+
+        error = self.get_error(state_value)
+
+        self.integral_term += error * self.ts
+
+        # Calculate u(t)
+        try:
+            u = self.kp * (error + ((1.0 / self.ti) * self.integral_term))
+        except ZeroDivisionError:
+            u = self.kp * (error + (0.0 * self.integral_term))
+
+        # Bound the controller output
+        if u > self.max_value:
+            self.output_value = self.max_value
+            # Back-calculate the integral error
+            self.integral_term -= error * self.ts
+        elif u < self.min_value:
+            self.output_value = self.min_value
+            # Back-calculate the integral error
+            self.integral_term -= error * self.ts
+        else:
+            self.output_value = u
+
+    def update(self, state_value, current_time):
+        super().update(state_value, current_time)
+
+        self.parameter_history.append([self.kp, self.ti])
+        self.integral_term_history.append(self.integral_term)
+        self.iteration_history.append(self.iteration_stage)
+        self.reference_history.append(self.setpoint)
+
+        # Return controller output
+        return self.output_value
 
     def dc_drho(self, s):
         kp = self.kp
@@ -759,78 +579,3 @@ class IterativeFeedbackTuningPIController(ZeroController):
         if sample > self.stage_length_samples:
             sample = self.stage_length_samples - 1
         return self.recorded_output[sample]
-
-    def update(self, state_value, current_time):
-        """Update controller state"""
-        self.current_time = current_time
-        elapsed_time = (current_time - self.stage_start_time) / 1000
-        setpoint = self.reference_signal(elapsed_time)
-        if rank == 0:
-            print(
-                "Stage: %d, Elapsed time: %.3f s, Reference: %.5f"
-                % (self.iteration_stage, elapsed_time, setpoint)
-            )
-
-        if elapsed_time >= self.stage_length:
-            if (
-                self.iteration_stage == 0
-                and len(self.error_history) < self.stage_length_samples
-            ):
-                if rank == 0:
-                    print("Extending stage 0 to gather more samples")
-            elif (
-                self.iteration_stage == 1
-                and len(self.error_history) < 2 * self.stage_length_samples
-            ):
-                if rank == 0:
-                    print("Extending stage 1 to gather more samples")
-            else:
-                if self.iteration_stage == 1:
-                    self.kp, self.ti = self.new_controller_parameters()
-                    if rank == 0:
-                        print(f"New params: kp={self.kp}, ti={self.ti}")
-                self.stage_start_time = self.current_time
-                elapsed_time = 0
-                self.iteration_stage = (self.iteration_stage + 1) % 2
-                if rank == 0:
-                    print("Stage change, now at stage %d" % self.iteration_stage)
-
-        if self.iteration_stage == 0:
-            sample = int(elapsed_time / self.ts)
-            self.recorded_output[sample] = state_value
-        if setpoint != 0:
-            error = (state_value - setpoint) / setpoint
-        else:
-            error = state_value
-
-        self.integral_term += error * self.ts
-
-        # Calculate u(t)
-        try:
-            u = self.kp * (error + ((1.0 / self.ti) * self.integral_term))
-        except ZeroDivisionError:
-            u = self.kp * (error + (0.0 * self.integral_term))
-
-        # Bound the controller output
-        if u > self.max_value:
-            self.output_value = self.max_value
-            # Back-calculate the integral error
-            self.integral_term -= error * self.ts
-        elif u < self.min_value:
-            self.output_value = self.min_value
-            # Back-calculate the integral error
-            self.integral_term -= error * self.ts
-        else:
-            self.output_value = u
-
-        self.integral_term_history.append(self.integral_term)
-        self.state_history.append(state_value)
-        self.error_history.append(error)
-        self.iteration_history.append(self.iteration_stage)
-        self.reference_history.append(setpoint)
-        self.sample_times.append(current_time / 1000)
-        self.output_history.append(self.output_value)
-        self.parameter_history.append([self.kp, self.ti])
-
-        # Return controller output
-        return self.output_value
