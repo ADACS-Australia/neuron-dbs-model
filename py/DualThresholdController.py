@@ -70,6 +70,23 @@ class DualThresholdController:
         self.last_output_value = 0.0
         self.output_value = 0.0
 
+    def _get_error(self, state_value):
+        # Check how to update controller value and calculate error with
+        # respect to upper/lower threshold
+        # Increase if above upper threshold
+        if state_value > self.upperthreshold:
+            error = (state_value - self.upperthreshold) / self.upperthreshold
+            increment = self.outputvalueincrement
+        # Decrease if below lower threshold
+        elif state_value < self.lowerthreshold:
+            error = (state_value - self.lowerthreshold) / self.lowerthreshold
+            increment = -self.outputvalueincrement
+        # Do nothing when within upper and lower thresholds
+        else:
+            error = 0
+            increment = 0
+        return error, increment
+
     def update(self, state_value, current_time):
         """Calculates updated controller output value for given reference feedback
         if state_value > upper_threshold:
@@ -89,20 +106,7 @@ class DualThresholdController:
         """
         self.current_time = current_time
 
-        # Check how to update controller value and calculate error with
-        # respect to upper/lower threshold
-        # Increase if above upper threshold
-        if state_value > self.upperthreshold:
-            error = (state_value - self.upperthreshold) / self.upperthreshold
-            increment = self.outputvalueincrement
-        # Decrease if below lower threshold
-        elif state_value < self.lowerthreshold:
-            error = (state_value - self.lowerthreshold) / self.lowerthreshold
-            increment = -self.outputvalueincrement
-        # Do nothing when within upper and lower thresholds
-        else:
-            error = 0
-            increment = 0
+        error, increment = self._get_error(state_value)
 
         # Bound the controller output (between minvalue - maxvalue)
         if self.last_output_value + increment > self.maxvalue:

@@ -67,6 +67,20 @@ class OnOffController:
         self.last_output_value = 0.0
         self.output_value = 0.0
 
+    def _get_error(self, state_value):
+        # Calculate Error - if setpoint > 0.0, then normalize error with
+        # respect to set point
+        if self.setpoint == 0.0:
+            error = state_value - self.setpoint
+            increment = 0.0
+        else:
+            error = (state_value - self.setpoint) / self.setpoint
+            if error > 0.0:
+                increment = self.outputvalueincrement
+            else:
+                increment = -self.outputvalueincrement
+        return error, increment
+
     def update(self, state_value, current_time):
         """Calculates updated controller output value for given reference feedback
 
@@ -80,17 +94,7 @@ class OnOffController:
         """
         self.current_time = current_time
 
-        # Calculate Error - if setpoint > 0.0, then normalize error with
-        # respect to set point
-        if self.setpoint == 0.0:
-            error = state_value - self.setpoint
-            increment = 0.0
-        else:
-            error = (state_value - self.setpoint) / self.setpoint
-            if error > 0.0:
-                increment = self.outputvalueincrement
-            else:
-                increment = -self.outputvalueincrement
+        error, increment = self._get_error(state_value)
 
         # Bound the controller output (between minvalue - maxvalue)
         if self.last_output_value + increment > self.maxvalue:
