@@ -40,17 +40,6 @@ class StandardPIDController:
 
         self.current_time = 0.0  # (sec)
         self.last_time = 0.0
-        self.kp = kp
-        self.ti = ti
-        self.td = td
-
-        # Set output value bounds
-        self.minvalue = minvalue
-        self.maxvalue = maxvalue
-
-        # Initialize controller terms
-        self.ITerm = 0.0
-        self.DTerm = 0.0
         self.last_error = 0.0
         self.last_output_value = 0.0
 
@@ -62,6 +51,18 @@ class StandardPIDController:
         self.error_history = []
         self.output_history = []
         self.sample_times = []
+
+        self.kp = kp
+        self.ti = ti
+        self.td = td
+
+        # Set output value bounds
+        self.minvalue = minvalue
+        self.maxvalue = maxvalue
+
+        # Initialize controller terms
+        self.ITerm = 0.0
+        self.DTerm = 0.0
 
     def clear(self):
         """Clears controller variables"""
@@ -79,7 +80,16 @@ class StandardPIDController:
         self.ITerm = 0.0
         self.DTerm = 0.0
 
-    def update(self, state_value, current_time):
+    def get_error(self, state_value):
+        # Calculate Error - if setpoint > 0.0, then normalize error with
+        # respect to set point
+        if self.setpoint == 0.0:
+            error = state_value - self.setpoint
+        else:
+            error = (state_value - self.setpoint) / self.setpoint
+        return error
+
+    def set_output(self, state_value):
         """Calculates controller output signal for given reference feedback
 
         where:
@@ -90,14 +100,7 @@ class StandardPIDController:
 
         """
 
-        self.current_time = current_time
-
-        # Calculate Error - if setpoint > 0.0, then normalize error with
-        # respect to set point
-        if self.setpoint == 0.0:
-            error = state_value - self.setpoint
-        else:
-            error = (state_value - self.setpoint) / self.setpoint
+        error = self.get_error(state_value)
 
         delta_time = self.ts
         delta_error = error - self.last_error
@@ -128,6 +131,14 @@ class StandardPIDController:
             self.ITerm -= error * delta_time
         else:
             self.output_value = u
+
+        return error
+
+    def update(self, state_value, current_time):
+        """Update controller state"""
+        self.current_time = current_time
+
+        error = self.set_output(state_value)
 
         # Remember last time and last error for next calculation
         self.last_time = self.current_time

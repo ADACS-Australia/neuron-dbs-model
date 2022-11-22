@@ -27,10 +27,11 @@ class ConstantController:
     def __init__(
         self,
         setpoint=0.0,
+        ts=0.0,
         minvalue=0.0,
         maxvalue=1e9,
         constantvalue=0.0,
-        ts=0.0,
+
     ):
         # Initial Controller Values
         self.setpoint = setpoint
@@ -41,10 +42,6 @@ class ConstantController:
         self.last_error = 0.0
         self.last_output_value = 0.0
 
-        self.maxvalue = maxvalue
-        self.minvalue = minvalue
-        self.constantvalue = constantvalue
-
         # Initialize the output value of the controller
         self.output_value = 0.0
 
@@ -53,6 +50,10 @@ class ConstantController:
         self.error_history = []
         self.output_history = []
         self.sample_times = []
+
+        self.maxvalue = maxvalue
+        self.minvalue = minvalue
+        self.constantvalue = constantvalue
 
     def clear(self):
         """Clears controller variables"""
@@ -67,19 +68,18 @@ class ConstantController:
         self.last_output_value = 0.0
         self.output_value = 0.0
 
-    def update(self, state_value, current_time):
-        """Calculates biomarker for constant DBS value
-
-        u = self.constantvalue
-
-        """
-
+    def get_error(self, state_value):
         # Calculate Error - if setpoint > 0.0, then normalize error with
         # respect to set point
         if self.setpoint == 0.0:
             error = state_value - self.setpoint
         else:
             error = (state_value - self.setpoint) / self.setpoint
+        return error
+
+    def set_output(self, state_value):
+        """Always sets controller output value to constant"""
+        error = self.get_error(state_value)
 
         # Bound the controller output (between minvalue - maxvalue)
         if self.constantvalue > self.maxvalue:
@@ -88,6 +88,14 @@ class ConstantController:
             self.output_value = self.minvalue
         else:
             self.output_value = self.constantvalue
+
+        return error
+
+    def update(self, state_value, current_time):
+        """Update controller state"""
+        self.current_time = current_time
+
+        error = self.set_output(state_value)
 
         # Remember last time and last error for next calculation
         self.last_time = self.current_time

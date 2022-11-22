@@ -63,18 +63,29 @@ class ZeroController:
         self.last_output_value = 0.0
         self.output_value = 0.0
 
-    def update(self, state_value, current_time):
-        """Update controller state"""
-        self.current_time = current_time
-
+    def get_error(self, state_value):
         # Calculate Error - if setpoint > 0.0, then normalize error with
         # respect to set point
         if self.setpoint == 0.0:
             error = state_value - self.setpoint
         else:
             error = (state_value - self.setpoint) / self.setpoint
+        return error
 
-        self.output_value = 0
+    def set_output(self, state_value):
+        """Always sets controller output value to zero"""
+
+        error = self.get_error(state_value)
+
+        self.output_value = 0.0
+
+        return error
+
+    def update(self, state_value, current_time):
+        """Update controller state"""
+        self.current_time = current_time
+
+        error = self.set_output(state_value)
 
         # Remember last time and last error for next calculation
         self.last_time = self.current_time

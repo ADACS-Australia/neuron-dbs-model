@@ -26,22 +26,17 @@ class DualThresholdController:
 
     def __init__(
         self,
+        # setpoint=0.0,
         ts=0.02,
-        lowerthreshold=0.0,
-        upperthreshold=0.1,
         minvalue=0.0,
         maxvalue=1e9,
         rampduration=0.25,
+        lowerthreshold=0.0,
+        upperthreshold=0.1,
     ):
         # Initial Controller Values
         # self.setpoint = setpoint
         self.ts = ts  # should be in sec
-        self.upperthreshold = upperthreshold
-        self.lowerthreshold = lowerthreshold
-        self.maxvalue = maxvalue
-        self.minvalue = minvalue
-        # should be defined in sec, i.e. 0.25 sec
-        self.rampduration = rampduration
 
         self.current_time = 0.0  # (sec)
         self.last_time = 0.0
@@ -57,6 +52,13 @@ class DualThresholdController:
         self.output_history = []
         self.sample_times = []
 
+        self.maxvalue = maxvalue
+        self.minvalue = minvalue
+        # should be defined in sec, i.e. 0.25 sec
+        self.rampduration = rampduration
+        self.upperthreshold = upperthreshold
+        self.lowerthreshold = lowerthreshold
+
     def clear(self):
         """Clears controller variables"""
 
@@ -70,7 +72,7 @@ class DualThresholdController:
         self.last_output_value = 0.0
         self.output_value = 0.0
 
-    def _get_error(self, state_value):
+    def get_error(self, state_value):
         # Check how to update controller value and calculate error with
         # respect to upper/lower threshold
         # Increase if above upper threshold
@@ -87,7 +89,7 @@ class DualThresholdController:
             increment = 0
         return error, increment
 
-    def update(self, state_value, current_time):
+    def set_output(self, state_value):
         """Calculates updated controller output value for given reference feedback
         if state_value > upper_threshold:
             y(t) = y(t-1) + u(t)
@@ -104,9 +106,8 @@ class DualThresholdController:
         if state_value(t) < lowerthreshold
 
         """
-        self.current_time = current_time
 
-        error, increment = self._get_error(state_value)
+        error, increment = self.get_error(state_value)
 
         # Bound the controller output (between minvalue - maxvalue)
         if self.last_output_value + increment > self.maxvalue:
@@ -115,6 +116,14 @@ class DualThresholdController:
             self.output_value = self.minvalue
         else:
             self.output_value = self.last_output_value + increment
+
+        return error
+
+    def update(self, state_value, current_time):
+        """Update controller state"""
+        self.current_time = current_time
+
+        error = self.set_output(state_value)
 
         # Remember last time and last error for next calculation
         self.last_time = self.current_time
