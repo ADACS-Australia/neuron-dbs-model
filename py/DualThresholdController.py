@@ -9,11 +9,8 @@ https://www.frontiersin.org/articles/10.3389/fnins.2020.00166/
 @author: John Fleming, john.fleming@ucdconnect.ie
 """
 
-import math
-
-import numpy as np
-import scipy.signal as signal
 from mpi4py import MPI
+
 from .OnOffController import OnOffController
 
 rank = MPI.COMM_WORLD.Get_rank()
@@ -33,7 +30,7 @@ class DualThresholdController(OnOffController):
         lowerthreshold=0.0,
         upperthreshold=0.1,
     ):
-        super().__init__(None,ts,minvalue,maxvalue,rampduration)
+        super().__init__(None, ts, minvalue, maxvalue, rampduration)
 
         del self.setpoint
         self.upperthreshold = upperthreshold

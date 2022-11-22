@@ -11,9 +11,8 @@ https://www.frontiersin.org/articles/10.3389/fnins.2020.00166/
 
 import math
 
-import numpy as np
-import scipy.signal as signal
 from mpi4py import MPI
+
 from .ConstantController import ConstantController
 
 rank = MPI.COMM_WORLD.Get_rank()
@@ -32,7 +31,7 @@ class OnOffController(ConstantController):
         maxvalue=1e9,
         rampduration=0.25,
     ):
-        super().__init__(setpoint,ts,minvalue,maxvalue,constantvalue=None)
+        super().__init__(setpoint, ts, minvalue, maxvalue, constantvalue=None)
         del self.constantvalue
 
         # should be defined in sec, i.e. 0.25 sec

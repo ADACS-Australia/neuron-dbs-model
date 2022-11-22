@@ -9,10 +9,6 @@ https://www.frontiersin.org/articles/10.3389/fnins.2020.00166/
 @author: John Fleming, john.fleming@ucdconnect.ie
 """
 
-import math
-
-import numpy as np
-import scipy.signal as signal
 from mpi4py import MPI
 
 rank = MPI.COMM_WORLD.Get_rank()
@@ -33,7 +29,7 @@ class StandardPIDController:
         minvalue=0.0,
         maxvalue=1e9,
     ):
-        super().__init__(setpoint,ts)
+        super().__init__(setpoint, ts)
 
         self.kp = kp
         self.ti = ti
@@ -54,7 +50,6 @@ class StandardPIDController:
 
         self.ITerm = 0.0
         self.DTerm = 0.0
-
 
     def set_output(self, state_value):
         """Calculates controller output signal for given reference feedback

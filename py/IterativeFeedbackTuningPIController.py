@@ -9,10 +9,7 @@ https://www.frontiersin.org/articles/10.3389/fnins.2020.00166/
 @author: John Fleming, john.fleming@ucdconnect.ie
 """
 
-import math
-
 import numpy as np
-import scipy.signal as signal
 from mpi4py import MPI
 
 rank = MPI.COMM_WORLD.Get_rank()
@@ -36,7 +33,7 @@ class IterativeFeedbackTuningPIController:
         min_kp=0,
         min_ti=0,
     ):
-        super().__init__(setpoint,ts)
+        super().__init__(setpoint, ts)
 
         self.stage_length = stage_length
         self.stage_length_samples = int(np.ceil(stage_length / ts)) + 1
