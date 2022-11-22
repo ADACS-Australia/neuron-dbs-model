@@ -69,6 +69,16 @@ class OnOffController:
         self.output_value = 0.0
 
     def get_error(self, state_value):
+        """Calculates updated controller output value for given reference feedback
+
+        y(t) = y(t-1) + u(t)
+
+        where:
+
+        u(t) = maxvalue / (rampduration/ts) if e(t) > setpoint
+        or -maxvalue / (rampduration/ts) if e(t) < setpoint
+
+        """
         # Calculate Error - if setpoint > 0.0, then normalize error with
         # respect to set point
         if self.setpoint == 0.0:
@@ -83,16 +93,6 @@ class OnOffController:
         return error, increment
 
     def set_output(self, state_value):
-        """Calculates updated controller output value for given reference feedback
-
-        y(t) = y(t-1) + u(t)
-
-        where:
-
-        u(t) = maxvalue / (rampduration/ts) if e(t) > setpoint
-        or -maxvalue / (rampduration/ts) if e(t) < setpoint
-
-        """
 
         error, increment = self.get_error(state_value)
 
