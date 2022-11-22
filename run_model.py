@@ -40,7 +40,11 @@ from pyNN.parameters import Sequence
 # Import global variables for GPe DBS
 import py.Global_Variables as GV
 from py.config import Config, get_controller_kwargs
-from py.Controllers import IterativeFeedbackTuningPIController, StandardPIDController
+from py.Controllers import (
+    IterativeFeedbackTuningPIController,
+    StandardPIDController,
+    ZeroController,
+)
 from py.Electrode_Distances import electrode_distance
 from py.network import get_network
 from py.utils import (
@@ -48,7 +52,6 @@ from py.utils import (
     generate_dbs_signal,
     make_beta_cheby1_filter,
 )
-from py.ZeroController import ZeroController
 
 h = neuron.h
 comm = MPI.COMM_WORLD
