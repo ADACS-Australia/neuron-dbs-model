@@ -25,8 +25,14 @@ def generate_dbs_signal(
         offset = 0                    # mA
     """
 
-    times = np.round(np.arange(start_time, stop_time, dt), 2)
+    _times = np.arange(start_time, stop_time, dt)
+    if len(_times) == 0:
+        _times = np.array([start_time])
+    times = np.round(_times, 2)
+
     tmp = np.arange(0, stop_time - start_time, dt) / 1000.0
+    if len(tmp) == 0:
+        tmp = np.array([0.0])
 
     if frequency == 0:
         dbs_signal = np.zeros(len(tmp))
@@ -43,15 +49,13 @@ def generate_dbs_signal(
         # Calculate the time for the first pulse of the next segment
         try:
             last_pulse_index = np.where(np.diff(dbs_signal) < 0)[0][-1]
-            next_pulse_time = times[last_pulse_index] + isi - pulse_width
-
-            # Track when the last pulse was
-            last_pulse_time = times[last_pulse_index]
-
         except IndexError:
             # Catch times when signal may be flat
             last_pulse_index = len(dbs_signal) - 1
-            next_pulse_time = times[last_pulse_index] + isi - pulse_width
+
+        # Track when the last pulse was
+        last_pulse_time = times[last_pulse_index]
+        next_pulse_time = last_pulse_time + isi - pulse_width
 
         # Rescale amplitude
         dbs_signal *= amplitude
