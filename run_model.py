@@ -29,11 +29,14 @@ if "nogui" not in opts:
 import argparse
 import math
 
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+
 import neo.io
 import neuron
 import numpy as np
 import quantities as pq
-from mpi4py import MPI
 from pyNN.neuron import end, run_until, setup, simulator
 from pyNN.parameters import Sequence
 
@@ -54,7 +57,6 @@ from py.utils import (
 )
 
 h = neuron.h
-comm = MPI.COMM_WORLD
 
 if __name__ == "__main__":
     os.chdir(oldpwd)
