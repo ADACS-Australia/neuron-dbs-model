@@ -15,19 +15,15 @@ Attributes:
 All other functions and classes are private, and should not be used by other
 modules.
 
-:copyright: Copyright 2006-2016 by the PyNN team, see AUTHORS.
+:copyright: Copyright 2006-2022 by the PyNN team, see AUTHORS.
 :license: CeCILL, see LICENSE for details.
 
 """
 
-try:
-    xrange
-except NameError:
-    xrange = range
 from pyNN import __path__ as pyNN_path
 from pyNN import common
 import logging
-import numpy
+import numpy as np
 import os.path
 from neuron import h, nrn_dll_loaded
 from operator import itemgetter
@@ -62,14 +58,14 @@ def load_mechanisms(path):
         return
     # in case NEURON is assuming a different architecture to Python,
     # we try multiple possibilities
-    arch_list = [platform.machine(), 'i686', 'x86_64', 'powerpc', 'umac']
-    if os.name == 'nt':
+    if platform.system() == 'Windows':
         lib_path = os.path.join(path, 'nrnmech.dll')
         if os.path.exists(lib_path):
             h.nrn_load_dll(lib_path)
             nrn_dll_loaded.append(path)
             return
     else:
+        arch_list = [platform.machine(), 'i686', 'x86_64', 'powerpc', 'umac']
         for arch in arch_list:
             lib_path = os.path.join(path, arch, '.libs', 'libnrnmech.so')
             if os.path.exists(lib_path):
@@ -92,8 +88,8 @@ def nativeRNG_pick(n, rng, distribution='uniform', parameters=[0, 1]):
     """
     native_rng = h.Random(0 or rng.seed)
     rarr = [getattr(native_rng, distribution)(*parameters)]
-    rarr.extend([native_rng.repick() for j in xrange(n - 1)])
-    return numpy.array(rarr)
+    rarr.extend([native_rng.repick() for j in range(n - 1)])
+    return np.array(rarr)
 
 
 def h_property(name):
@@ -176,6 +172,7 @@ class _State(common.control.BaseState):
         self.clear()
         self.default_maxstep = 10.0
         self.native_rng_baseseed = 0
+        self.record_sample_times = False
 
     t = h_property('t')
 
@@ -397,7 +394,6 @@ class ID(int, common.IDMixin):
                     state.register_gid(gid, self._cell.source['collateral'], section=self._cell.source_section['collateral'])
         else:
             state.register_gid(gid, self._cell.source, section=self._cell.source_section)
-
         if hasattr(self._cell, "get_threshold"):            # this is not adequate, since the threshold may be changed after cell creation
             state.parallel_context.threshold(int(self), self._cell.get_threshold())  # the problem is that self._cell does not know its own gid
 
@@ -432,7 +428,6 @@ class Connection(common.Connection):
             self.presynaptic_cell = projection.pre[pre] + 2e6
         else:
             self.presynaptic_cell = projection.pre[pre]
-
         self.postsynaptic_cell = projection.post[post]
         if "." in projection.receptor_type:
             section, target = projection.receptor_type.split(".")
@@ -612,12 +607,12 @@ def generate_synapse_property(name):
     def _set(self, val):
         setattr(self.weight_adjuster, name, val)
     return property(_get, _set)
-setattr(Connection, 'w_max', generate_synapse_property('wmax'))
-setattr(Connection, 'w_min', generate_synapse_property('wmin'))
-setattr(Connection, 'A_plus', generate_synapse_property('aLTP'))
-setattr(Connection, 'A_minus', generate_synapse_property('aLTD'))
-setattr(Connection, 'tau_plus', generate_synapse_property('tauLTP'))
-setattr(Connection, 'tau_minus', generate_synapse_property('tauLTD'))
+setattr(Connection, 'wmax', generate_synapse_property('wmax'))
+setattr(Connection, 'wmin', generate_synapse_property('wmin'))
+setattr(Connection, 'aLTP', generate_synapse_property('aLTP'))
+setattr(Connection, 'aLTD', generate_synapse_property('aLTD'))
+setattr(Connection, 'tauLTP', generate_synapse_property('tauLTP'))
+setattr(Connection, 'tauLTD', generate_synapse_property('tauLTD'))
 setattr(Connection, 'U', generate_synapse_property('U'))
 setattr(Connection, 'tau_rec', generate_synapse_property('tau_rec'))
 setattr(Connection, 'tau_facil', generate_synapse_property('tau_facil'))

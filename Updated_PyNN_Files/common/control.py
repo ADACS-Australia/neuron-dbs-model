@@ -8,7 +8,7 @@ This module contains:
     is intended to be reused)
   * function factories for generating backend-specific API functions.
 
-:copyright: Copyright 2006-2016 by the PyNN team, see AUTHORS.
+:copyright: Copyright 2006-2022 by the PyNN team, see AUTHORS.
 :license: CeCILL, see LICENSE for details.
 """
 
@@ -26,7 +26,8 @@ class BaseState(object):
         """Initialize the simulator."""
         self.running = False
         self.t_start = 0
-        self.write_on_end = []  # a list of (population, variable, filename) combinations that should be written to file on end()
+        # a list of (population, variable, filename) combinations that should be written to file on end()
+        self.write_on_end = []
         self.recorders = set([])
 
 
@@ -50,7 +51,8 @@ def setup(timestep=DEFAULT_TIMESTEP, min_delay=DEFAULT_MIN_DELAY,
         if min_delay > max_delay:
             raise Exception("min_delay has to be less than or equal to max_delay.")
         if min_delay < timestep:
-            raise Exception("min_delay (%g) must be greater than timestep (%g)" % (min_delay, timestep))
+            raise Exception("min_delay (%g) must be greater than timestep (%g)" %
+                            (min_delay, timestep))
 
 
 def end(compatible_output=True):
