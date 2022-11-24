@@ -260,66 +260,14 @@ class _State(common.control.BaseState):
             for iclamp in source._devices:
                 source._update_iclamp(iclamp, tstop)
 
-    def run(self, simtime, run_from_steady_state=False):
+    def run(self, simtime):
         """Advance the simulation for a certain time."""
-        self.run_until(self.tstop + simtime, run_from_steady_state)
+        self.run_until(self.tstop + simtime)
 
-    def run_until(self, tstop, run_from_steady_state=False):
+    def run_until(self, tstop):
         self._update_current_sources(tstop)
         self._pre_run()
-        self.parallel_context.set_maxstep(self.default_maxstep)
         self.tstop = tstop
-
-        # check if we need to load the steady state for our simulation
-        if run_from_steady_state:
-            h.stdinit()
-
-            ns = h.SaveState()
-            sf = h.File(f'steady_state_{self.num_processes}.{self.mpi_rank}.bin')
-            ns.fread(sf)
-            #print("Time before restore = %g ms" % h.t)
-            ns.restore(0)
-            #print("Time after restore = %g ms" % h.t)
-            h.cvode_active(0)
-
-        #logger.info("Running the simulation until %g ms" % tstop)
-        if self.tstop > self.t:
-            self.parallel_context.psolve(self.tstop)
-
-    def run_to_steady_state(self, tstop):
-        self._update_current_sources(tstop)
-        self._pre_run()
-        self.parallel_context.set_maxstep(self.default_maxstep)
-        self.tstop = tstop
-
-        #logger.info("Running the simulation until steady state: %g ms" % tstop)
-        if self.tstop > self.t:
-            self.parallel_context.psolve(self.tstop)
-        # Make object to save the model state
-        svstate = h.SaveState()
-
-        # Save the model state and write it to file
-        svstate.save()
-        f = h.File(f'steady_state_{self.num_processes}.{self.mpi_rank}.bin')
-        svstate.fwrite(f)
-        #print("Steady State written to file!")
-
-    def run_from_steady_state(self, tstop):
-        self._update_current_sources(tstop)
-        self._pre_run()
-        self.parallel_context.set_maxstep(self.default_maxstep)
-        self.tstop = tstop
-
-        h.stdinit()
-
-        ns = h.SaveState()
-        sf = h.File(f'steady_state_{self.num_processes}.{self.mpi_rank}.bin')
-        ns.fread(sf)
-        #print("Time before restore = %g ms" % h.t)
-        ns.restore(0)
-
-        h.cvode_active(0)
-        #print("Time after restore = %g ms" % h.t)
         #logger.info("Running the simulation until %g ms" % tstop)
         if self.tstop > self.t:
             self.parallel_context.psolve(self.tstop)

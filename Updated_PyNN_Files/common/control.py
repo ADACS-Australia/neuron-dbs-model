@@ -32,7 +32,7 @@ class BaseState(object):
 
 
 def setup(timestep=DEFAULT_TIMESTEP, min_delay=DEFAULT_MIN_DELAY,
-           **extra_params):
+          **extra_params):
     """
     Initialises/reinitialises the simulator. Any existing network structure is
     destroyed.
@@ -48,7 +48,7 @@ def setup(timestep=DEFAULT_TIMESTEP, min_delay=DEFAULT_MIN_DELAY,
         if param in extra_params:
             raise Exception("%s is not a valid argument for setup()" % param)
     if min_delay != 'auto':
-        if min_delay > max_delay:
+        if max_delay != 'auto' and min_delay > max_delay:
             raise Exception("min_delay has to be less than or equal to max_delay.")
         if min_delay < timestep:
             raise Exception("min_delay (%g) must be greater than timestep (%g)" %
@@ -61,7 +61,7 @@ def end(compatible_output=True):
 
 
 def build_run(simulator):
-    def run_until(time_point, run_from_steady_state=False, callbacks=None):
+    def run_until(time_point, callbacks=None):
         """
         Advance the simulation until `time_point` (in ms).
 
@@ -90,12 +90,12 @@ def build_run(simulator):
                 next = min(next, time_point)
                 simulator.state.run_until(next)
                 callback_events.extend((callback(simulator.state.t), callback)
-                        for callback in active_callbacks)
+                                       for callback in active_callbacks)
         else:
-            simulator.state.run_until(time_point, run_from_steady_state)
+            simulator.state.run_until(time_point)
         return simulator.state.t
 
-    def run(simtime, run_from_steady_state=False, callbacks=None):
+    def run(simtime, callbacks=None):
         """
         Advance the simulation by `simtime` ms.
 
@@ -110,47 +110,9 @@ def build_run(simulator):
         followed by ``run(y)``. If you wish to reset the simulation state to
         the initial conditions (time ``t = 0``), use the ``reset()`` function.
         """
-        return run_until(simulator.state.t + simtime, run_from_steady_state, callbacks)
+        return run_until(simulator.state.t + simtime, callbacks)
+    return run, run_until
 
-    def run_to_steady_state(time_point):
-        """
-        Advance the simulation until `time_point` (in ms).
-
-        `callbacks` is an optional list of callables, each of which should
-        accept the current time as an argument, and return the next time it
-        wishes to be called.
-
-        ``run_until()`` and ``run()`` may be combined freely. See the
-        documentation of the ``run()`` function for further information.
-        """
-        now = simulator.state.t
-        if time_point - now < -simulator.state.dt / 2.0:  # allow for floating point error
-            raise ValueError("Time %g is in the past (current time %g)" % (time_point, now))
-
-        simulator.state.run_to_steady_state(time_point)
-
-        return simulator.state.t
-
-    def run_from_steady_state(time_point):
-        """
-        Advance the simulation until `time_point` (in ms).
-
-        `callbacks` is an optional list of callables, each of which should
-        accept the current time as an argument, and return the next time it
-        wishes to be called.
-
-        ``run_until()`` and ``run()`` may be combined freely. See the
-        documentation of the ``run()`` function for further information.
-        """
-        now = simulator.state.t
-        if time_point - now < -simulator.state.dt / 2.0:  # allow for floating point error
-            raise ValueError("Time %g is in the past (current time %g)" % (time_point, now))
-
-        simulator.state.run_from_steady_state(time_point)
-
-        return simulator.state.t
-
-    return run, run_until, run_to_steady_state, run_from_steady_state
 
 def build_reset(simulator):
     def reset(annotations={}):

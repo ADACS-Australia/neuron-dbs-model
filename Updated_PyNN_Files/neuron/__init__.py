@@ -78,6 +78,7 @@ def setup(timestep=DEFAULT_TIMESTEP, min_delay=DEFAULT_MIN_DELAY, **extra_params
     simulator.state.min_delay = min_delay
     simulator.state.max_delay = extra_params.get('max_delay', DEFAULT_MAX_DELAY)
     if 'use_cvode' in extra_params:
+        simulator.state.record_sample_times = extra_params['use_cvode']
         simulator.state.cvode.active(int(extra_params['use_cvode']))
         if 'rtol' in extra_params:
             simulator.state.cvode.rtol(float(extra_params['rtol']))
@@ -98,7 +99,8 @@ def end(compatible_output=True):
     simulator.state.write_on_end = []
     # simulator.state.finalize()
 
-run, run_until, run_to_steady_state, run_from_steady_state = common.build_run(simulator)
+
+run, run_until = common.build_run(simulator)
 run_for = run
 
 reset = common.build_reset(simulator)
@@ -110,7 +112,7 @@ initialize = common.initialize
 # ==============================================================================
 
 get_current_time, get_time_step, get_min_delay, get_max_delay, \
-            num_processes, rank = common.build_state_queries(simulator)
+    num_processes, rank = common.build_state_queries(simulator)
 
 
 # ==============================================================================
