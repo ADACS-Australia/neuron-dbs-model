@@ -1,0 +1,64 @@
+diff --git a/pyNN/neuron/simulator.py b/pyNN/neuron/simulator.py
+index 9df8d8fd..6634e66d 100644
+--- a/pyNN/neuron/simulator.py
++++ b/pyNN/neuron/simulator.py
+@@ -205,6 +205,10 @@ class _State(common.control.BaseState):
+         else:
+             nc = h.NetCon(source, None, sec=section)
+         self.parallel_context.cell(gid, nc)                     # } with the gid (using a temporary NetCon)
++        # Check if gid is along the main axon of collateral neuron
++        if gid>2e6:
++            self.parallel_context.threshold(gid, -10)
++
+         self.gid_sources.append(source)  # gid_clear (in _State.reset()) will cause a
+                                         # segmentation fault if any of the sources
+                                         # registered using pc.cell() no longer exist, so
+@@ -326,7 +330,16 @@ class ID(int, common.IDMixin):
+         """
+         gid = int(self)
+         self._cell = cell_model(**cell_parameters)          # create the cell object
+-        state.register_gid(gid, self._cell.source, section=self._cell.source_section)
++
++        # Check if _cell.source is a dictionary
++        if isinstance(self._cell.source, dict):
++            keys = ('collateral','soma','middle_axon_node')
++            id_offsets = (0, 1e6, 2e6)
++            for key, offset in zip(keys, id_offsets):
++                _gid = gid + offset
++                state.register_gid(_gid, self._cell.source[key], section=self._cell.source_section[key])
++        else:
++            state.register_gid(gid, self._cell.source, section=self._cell.source_section)
+         if hasattr(self._cell, "get_threshold"):            # this is not adequate, since the threshold may be changed after cell creation
+             state.parallel_context.threshold(int(self), self._cell.get_threshold())  # the problem is that self._cell does not know its own gid
+ 
+@@ -355,7 +368,12 @@ class Connection(common.Connection):
+         #logger.debug("Creating connection from %d to %d, weight %g" % (pre, post, parameters['weight']))
+         self.presynaptic_index = pre
+         self.postsynaptic_index = post
+-        self.presynaptic_cell = projection.pre[pre]
++        if projection.source=='soma':
++            self.presynaptic_cell = projection.pre[pre] + 1e6
++        elif projection.source=='middle_axon_node':
++            self.presynaptic_cell = projection.pre[pre] + 2e6
++        else:
++            self.presynaptic_cell = projection.pre[pre]
+         self.postsynaptic_cell = projection.post[post]
+         if "." in projection.receptor_type:
+             section, target = projection.receptor_type.split(".")
+diff --git a/pyNN/neuron/standardmodels/electrodes.py b/pyNN/neuron/standardmodels/electrodes.py
+index 8d57527f..8c69a52b 100644
+--- a/pyNN/neuron/standardmodels/electrodes.py
++++ b/pyNN/neuron/standardmodels/electrodes.py
+@@ -136,7 +136,11 @@ class NeuronCurrentSource(StandardCurrentSource):
+                     raise TypeError("Can't inject current into a spike source.")
+                 if not (id in self._h_iclamps):
+                     self.cell_list += [id]
+-                    self._h_iclamps[id] = h.IClamp(0.5, sec=id._cell.source_section)
++                    # Check if there is more than one source on the cell - only insert current into soma
++                    if isinstance(id._cell.source_section, dict):
++                        self._h_iclamps[id] = h.IClamp(0.5, sec=id._cell.source_section['soma'])
++                    else:
++                        self._h_iclamps[id] = h.IClamp(0.5, sec=id._cell.source_section)
+                     self._devices.append(self._h_iclamps[id])
+ 
+     def record(self):
