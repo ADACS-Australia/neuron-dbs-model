@@ -333,16 +333,11 @@ class ID(int, common.IDMixin):
 
         # Check if _cell.source is a dictionary
         if isinstance(self._cell.source, dict):
-            for k, v in self._cell.source.items():
-                if k=='soma':
-                    _gid = gid + 1e6
-                elif k=='middle_axon_node':
-                    _gid = gid + 2e6
-                elif k=='collateral':
-                    _gid = gid
-                else:
-                    raise RuntimeError(f"Bad type of cell source: {k}")
-                state.register_gid(_gid, self._cell.source[k], section=self._cell.source_section[k])
+            keys = ('collateral','soma','middle_axon_node')
+            id_offsets = (0, 1e6, 2e6)
+            for key, offset in zip(keys, id_offsets):
+                _gid = gid + offset
+                state.register_gid(_gid, self._cell.source[key], section=self._cell.source_section[key])
         else:
             state.register_gid(gid, self._cell.source, section=self._cell.source_section)
         if hasattr(self._cell, "get_threshold"):            # this is not adequate, since the threshold may be changed after cell creation
