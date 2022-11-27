@@ -26,30 +26,37 @@ opts = os.environ.get("NEURON_MODULE_OPTIONS", "")
 if "nogui" not in opts:
     os.environ["NEURON_MODULE_OPTIONS"] = opts + " -nogui"
 
-from mpi4py import MPI
-import neuron
-from pyNN.neuron import setup, run_until, end, simulator
-from pyNN.parameters import Sequence
-from py.Controllers import (
-    ZeroController,
-    StandardPIDController,
-    IterativeFeedbackTuningPIController,
-)
-import neo.io
-import quantities as pq
-import numpy as np
-import math
 import argparse
-from py.utils import make_beta_cheby1_filter, calculate_avg_beta_power
-from py.network import get_network
-from py.Electrode_Distances import electrode_distance
-from py.config import Config, get_controller_kwargs
+import math
+
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+
+import neo.io
+import neuron
+import numpy as np
+import quantities as pq
+from pyNN.neuron import end, run_until, setup, simulator
+from pyNN.parameters import Sequence
 
 # Import global variables for GPe DBS
 import py.Global_Variables as GV
+from py.config import Config, controller_interface
+from py.Controllers import (
+    IterativeFeedbackTuningPIController,
+    StandardPIDController,
+    ZeroController,
+)
+from py.Electrode_Distances import electrode_distance
+from py.network import get_network
+from py.utils import (
+    calculate_avg_beta_power,
+    generate_dbs_signal,
+    make_beta_cheby1_filter,
+)
 
 h = neuron.h
-comm = MPI.COMM_WORLD
 
 if __name__ == "__main__":
     os.chdir(oldpwd)
@@ -211,7 +218,7 @@ if __name__ == "__main__":
         controller_call_times = np.array([controller_start])
 
     # Initialize the Controller being used:
-    # Controller sampling period, Ts, is in sec
+    # Controller sampling period, ts, is in sec
     if controller_type == "ZERO":
         Controller = ZeroController
     elif controller_type == "PID":
@@ -221,7 +228,7 @@ if __name__ == "__main__":
     else:
         raise RuntimeError("Bad choice of Controller")
 
-    controller_kwargs = get_controller_kwargs(c)
+    controller_kwargs = controller_interface(c)
     controller = Controller(**controller_kwargs)
 
     simulation_output_dir = output_dir
@@ -240,7 +247,7 @@ if __name__ == "__main__":
         DBS_times,
         next_DBS_pulse_time,
         last_DBS_pulse_time,
-    ) = controller.generate_dbs_signal(
+    ) = generate_dbs_signal(
         start_time=steady_state_duration + 10 + simulator.state.dt,
         stop_time=sim_total_time,
         last_pulse_time_prior=last_pulse_time_prior,
@@ -304,7 +311,7 @@ if __name__ == "__main__":
             GPe_DBS_times,
             GPe_next_DBS_pulse_time,
             GPe_last_DBS_pulse_time,
-        ) = controller.generate_dbs_signal(
+        ) = generate_dbs_signal(
             start_time=steady_state_duration + 10 + simulator.state.dt,
             stop_time=sim_total_time,
             last_pulse_time_prior=last_pulse_time_prior,
@@ -503,7 +510,7 @@ if __name__ == "__main__":
                     new_DBS_times_Segment,
                     next_DBS_pulse_time,
                     last_DBS_pulse_time,
-                ) = controller.generate_dbs_signal(
+                ) = generate_dbs_signal(
                     start_time=next_DBS_pulse_time,
                     stop_time=controller_call_times[call_index + 1],
                     last_pulse_time_prior=last_pulse_time_prior,

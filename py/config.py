@@ -4,33 +4,28 @@ import yaml
 from cerberus import Validator
 
 zero_schema = dict(
-    SetPoint={"type": "float", "coerce": float},
-    Ts={"type": "float", "coerce": float},
+    setpoint={"type": "float", "coerce": float},
+    ts={"type": "float", "coerce": float},
 )
 
 pid_schema = dict(
-    SetPoint={"type": "float", "coerce": float},
-    Kp={"type": "float", "coerce": float},
-    Ti={"type": "float", "coerce": float},
-    Td={"type": "float", "coerce": float},
-    Ts={"type": "float", "coerce": float},
-    MinValue={"type": "float", "coerce": float},
-    MaxValue={"type": "float", "coerce": float},
+    kp={"type": "float", "coerce": float},
+    ti={"type": "float", "coerce": float},
+    td={"type": "float", "coerce": float},
+    minvalue={"type": "float", "coerce": float},
+    maxvalue={"type": "float", "coerce": float},
 )
+pid_schema.update(zero_schema)
 
 ift_schema = dict(
-    SetPoint={"type": "float", "coerce": float},
-    Kp={"type": "float", "coerce": float},
-    Ti={"type": "float", "coerce": float},
-    Ts={"type": "float", "coerce": float},
-    MinValue={"type": "float", "coerce": float},
-    MaxValue={"type": "float", "coerce": float},
     stage_length={"type": "float", "coerce": float},
     gamma={"type": "float", "coerce": float},
     lam={"type": "float", "coerce": float},
     min_kp={"type": "float", "coerce": float},
     min_ti={"type": "float", "coerce": float},
 )
+ift_schema.update(pid_schema)
+del ift_schema["td"]
 
 
 class Config(object):
@@ -51,13 +46,13 @@ class Config(object):
         TimeStep={"type": "float", "coerce": float, "default": 0.01},
         SteadyStateDuration={"type": "float", "coerce": float, "default": 6000.0},
         RunTime={"type": "float", "coerce": float, "default": 32000.0},
-        SetPoint={"type": "float", "coerce": float, "default": 0},
-        Kp={"type": "float", "coerce": float, "default": 0.23},
-        Ti={"type": "float", "coerce": float, "default": 0.2},
-        Td={"type": "float", "coerce": float, "default": 0},
-        Ts={"type": "float", "coerce": float, "default": 0},
-        MinValue={"type": "float", "coerce": float, "default": 0},
-        MaxValue={"type": "float", "coerce": float, "default": 3},
+        setpoint={"type": "float", "coerce": float, "default": 0},
+        kp={"type": "float", "coerce": float, "default": 0.23},
+        ti={"type": "float", "coerce": float, "default": 0.2},
+        td={"type": "float", "coerce": float, "default": 0},
+        ts={"type": "float", "coerce": float, "default": 0},
+        minvalue={"type": "float", "coerce": float, "default": 0},
+        maxvalue={"type": "float", "coerce": float, "default": 3},
         stage_length={"type": "float", "coerce": float, "default": 0},
         gamma={"type": "float", "coerce": float, "default": 0.01},
         lam={"type": "float", "coerce": float, "default": 1e-8},
@@ -87,7 +82,7 @@ class Config(object):
         return str(vars(self)).strip("{}").replace(", ", ",\n")
 
 
-def get_controller_kwargs(config):
+def controller_interface(config):
     v = Validator(require_all=True, purge_unknown=True)
     controller = config.Controller
     if controller == "ZERO":
